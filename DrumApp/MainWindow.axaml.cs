@@ -154,10 +154,11 @@ public partial class MainWindow : Window
         { Key.A,     0 }, // HH
         { Key.S,     1 }, // CR
         { Key.D,     2 }, // SN
-        { Key.F,     3 }, // TM (hi-mid)
-        { Key.Space, 4 }, // BD
-        { Key.J,     5 }, // TM (floor)
-        { Key.K,     6 }, // RD
+        { Key.F,     3 }, // TM1
+        { Key.G,     4 }, // TM2
+        { Key.Space, 5 }, // BD
+        { Key.J,     6 }, // FTM
+        { Key.K,     7 }, // RD
     };
 
     private static readonly IReadOnlyList<DrumLane> _kitLanes = DrumLane.StandardKit();
