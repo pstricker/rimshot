@@ -26,13 +26,13 @@ public partial class CueView : UserControl
     // (Xf = fraction of canvas width, Yf = fraction of canvas height, Df = fraction of canvas height)
     private static readonly (double Xf, double Yf, double Df)[] _padLayout =
     [
-        (0.30, 0.87, 0.110), // HH  — left, lower
-        (0.35, 0.74, 0.110), // CR  — upper-left
-        (0.42, 0.91, 0.110), // SN  — front-left, low
-        (0.46, 0.77, 0.100), // TM-hi — upper-center
+        (0.33, 0.87, 0.110), // HH  — left, lower
+        (0.36, 0.73, 0.110), // CR  — upper-left
+        (0.41, 0.91, 0.110), // SN  — front-left, low
+        (0.47, 0.72, 0.100), // TM-hi — upper-center (clear of BD)
         (0.50, 0.86, 0.150), // BD  — center, large
-        (0.59, 0.93, 0.110), // TM-floor — front-right, low
-        (0.66, 0.74, 0.110), // RD  — upper-right
+        (0.60, 0.88, 0.110), // TM-floor — right, raised
+        (0.63, 0.73, 0.110), // RD  — upper-right
     ];
     private readonly double[] _padCX     = new double[LaneCount];
     private readonly double[] _padCY     = new double[LaneCount];
