@@ -33,7 +33,7 @@ public partial class CueView : UserControl
         (0.49, 0.74, 0.110), // TM2 — upper center-right
         (0.43, 0.88, 0.120), // BD  — center lower
         (0.64, 0.86, 0.130), // FTM — lower right
-        (0.66, 0.68, 0.125), // RD  — upper right, mirroring CR offset from SN
+        (0.62, 0.68, 0.125), // RD  — upper right, left of FTM mirroring CR offset from SN
     ];
     private readonly double[] _padCX     = new double[LaneCount];
     private readonly double[] _padCY     = new double[LaneCount];
