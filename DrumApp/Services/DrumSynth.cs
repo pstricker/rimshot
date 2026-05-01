@@ -18,13 +18,14 @@ public static class DrumSynth
 
     public static short[] GenerateSamples(int lane) => lane switch
     {
-        0 => Noise(0.080, decayRate: 40),
-        1 => Noise(0.500, decayRate: 4),
-        2 => NoisePlusTone(0.120, freq: 220, decayRate: 25),
-        3 => Tone(0.250, freq: 250, decayRate: 14),
-        4 => BassDrum(0.350),
-        5 => Tone(0.300, freq: 180, decayRate: 10),
-        6 => Noise(0.700, decayRate: 2.5),
+        0 => Noise(0.080, decayRate: 40),                    // HH
+        1 => Noise(0.500, decayRate: 4),                     // CR
+        2 => NoisePlusTone(0.120, freq: 220, decayRate: 25), // SN
+        3 => Tone(0.250, freq: 250, decayRate: 14),          // TM1 high
+        4 => Tone(0.280, freq: 210, decayRate: 12),          // TM2 mid
+        5 => BassDrum(0.350),                                // BD
+        6 => Tone(0.300, freq: 180, decayRate: 10),          // FTM
+        7 => Noise(0.700, decayRate: 2.5),                   // RD
         _ => Noise(0.100, decayRate: 30),
     };
 

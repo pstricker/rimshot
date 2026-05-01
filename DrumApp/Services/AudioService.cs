@@ -6,11 +6,11 @@ namespace DrumApp.Services;
 
 public unsafe class AudioService : IDisposable
 {
-    private const int LaneCount = 7;
+    private const int LaneCount = 8;
     private const int PoolSize = 4;
     private const int SampleRate = 44100;
 
-    private static readonly string[] _fileNames = ["hh", "cr", "sn", "tm_hi", "bd", "tm_fl", "rd"];
+    private static readonly string[] _fileNames = ["hh", "cr", "sn", "tm_hi", "tm_mid", "bd", "tm_fl", "rd"];
 
     private readonly AL? _al;
     private readonly ALContext? _alc;

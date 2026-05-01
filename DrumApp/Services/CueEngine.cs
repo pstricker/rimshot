@@ -9,14 +9,14 @@ public enum CueEngineState { Stopped, Running, Paused }
 public class CueEngine
 {
     // Base demo pattern: (eighthNoteOffset within bar, laneIndex)
-    // Lane order: HH=0, CR=1, SN=2, TM=3, BD=4, TM=5, RD=6
+    // Lane order: HH=0, CR=1, SN=2, TM1=3, TM2=4, BD=5, FTM=6, RD=7
     private static readonly (int Offset, int Lane)[] _basePattern =
     [
-        (0, 0), (0, 4),   // beat 1: HH + BD
+        (0, 0), (0, 5),   // beat 1: HH + BD
         (1, 0),            // & 1:    HH
         (2, 0), (2, 2),   // beat 2: HH + SN
         (3, 0),            // & 2:    HH
-        (4, 0), (4, 4),   // beat 3: HH + BD
+        (4, 0), (4, 5),   // beat 3: HH + BD
         (5, 0),            // & 3:    HH
         (6, 0), (6, 2),   // beat 4: HH + SN
         (7, 0),            // & 4:    HH

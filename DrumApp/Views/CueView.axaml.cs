@@ -14,7 +14,7 @@ public partial class CueView : UserControl
 {
     private const double TravelMs = 2000.0;
     private const double HitZoneFraction = 0.85;
-    private const int LaneCount = 7;
+    private const int LaneCount = 8;
     private const double HitWindowMs = 150.0;
     private const double RingDurationMs = 350.0;
 
@@ -26,13 +26,14 @@ public partial class CueView : UserControl
     // (Xf = fraction of canvas width, Yf = fraction of canvas height, Df = fraction of canvas height)
     private static readonly (double Xf, double Yf, double Df)[] _padLayout =
     [
-        (0.33, 0.87, 0.110), // HH  — left, lower
-        (0.36, 0.73, 0.110), // CR  — upper-left
-        (0.41, 0.91, 0.110), // SN  — front-left, low
-        (0.47, 0.72, 0.100), // TM-hi — upper-center (clear of BD)
-        (0.50, 0.86, 0.150), // BD  — center, large
-        (0.60, 0.88, 0.110), // TM-floor — right, raised
-        (0.63, 0.73, 0.110), // RD  — upper-right
+        (0.13, 0.77, 0.120), // HH  — far left, mid height
+        (0.29, 0.67, 0.115), // CR  — upper left
+        (0.27, 0.85, 0.125), // SN  — lower left
+        (0.40, 0.73, 0.095), // TM1 — upper center-left
+        (0.53, 0.73, 0.095), // TM2 — upper center-right
+        (0.47, 0.88, 0.110), // BD  — center lower
+        (0.70, 0.85, 0.120), // FTM — lower right
+        (0.74, 0.67, 0.115), // RD  — upper right
     ];
     private readonly double[] _padCX     = new double[LaneCount];
     private readonly double[] _padCY     = new double[LaneCount];
