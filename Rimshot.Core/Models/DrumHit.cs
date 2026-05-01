@@ -1,6 +1,6 @@
 using System;
 
-namespace Rimshot.Models;
+namespace Rimshot.Core.Models;
 
 public record DrumHit(DateTime Timestamp, string DrumName, int NoteNumber, int Velocity)
 {

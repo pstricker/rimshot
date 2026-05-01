@@ -3,6 +3,7 @@
         xmlns:views="clr-namespace:Rimshot.Views"
         x:Class="Rimshot.MainWindow"
         Title="Rimshot"
+        Icon="avares://Rimshot.Core/Assets/icon.png"
         Width="900" Height="650"
         MinWidth="600" MinHeight="400"
         Background="#0A0A0A">
@@ -79,7 +80,7 @@
                             Foreground="#888888"
                             Padding="14,6"/>
                     <Button x:Name="RestartButton"
-                            Content="■ STOP"
+                            Content="↺ RESTART"
                             Click="OnRestartClicked"
                             Background="Transparent"
                             BorderBrush="#444444"
@@ -95,12 +96,40 @@
                                Foreground="#888888"/>
                     <NumericUpDown x:Name="BpmControl"
                                    Value="90" Minimum="40" Maximum="200" Increment="5"
-                                   Width="100"
+                                   Width="120"
                                    Foreground="#FFD700"
                                    ValueChanged="OnBpmChanged"/>
                 </StackPanel>
 
             </Grid>
+        </Border>
+
+        <!-- Song Selection Row -->
+        <Border DockPanel.Dock="Top"
+                Background="#141414"
+                Padding="12,6,12,6"
+                Margin="0,0,0,2">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock Text="SONG"
+                           VerticalAlignment="Center"
+                           Foreground="#888888"
+                           FontSize="12"/>
+                <ComboBox x:Name="SongCombo"
+                          MinWidth="220"
+                          SelectionChanged="OnSongSelectionChanged"/>
+                <CheckBox x:Name="AutoPlayCheck"
+                          Content="AUTO PLAY"
+                          VerticalAlignment="Center"
+                          Foreground="#FFD700"
+                          FontSize="12"
+                          Margin="12,0,0,0"
+                          IsCheckedChanged="OnAutoPlayChanged"/>
+                <TextBlock x:Name="SongStatusLabel"
+                           VerticalAlignment="Center"
+                           Foreground="#888888"
+                           FontSize="11"
+                           Margin="6,0,0,0"/>
+            </StackPanel>
         </Border>
 
         <!-- Tabs -->

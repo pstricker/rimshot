@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Rimshot;
+namespace Rimshot.Core;
 
 public static class DrumMap
 {

@@ -5,6 +5,10 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rimshot", "Rimshot\Rimshot.csproj", "{F001FF5C-7766-4386-A12A-AAFEECEBD3BE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rimshot.Core", "Rimshot.Core\Rimshot.Core.csproj", "{CCBD3BBA-9BE2-439B-936B-E621014B7EA2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rimshot.Inspector", "Rimshot.Inspector\Rimshot.Inspector.csproj", "{A00B4317-7CE0-4B05-B8EF-045DAA7FD725}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +22,13 @@ Global
 		{F001FF5C-7766-4386-A12A-AAFEECEBD3BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F001FF5C-7766-4386-A12A-AAFEECEBD3BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F001FF5C-7766-4386-A12A-AAFEECEBD3BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCBD3BBA-9BE2-439B-936B-E621014B7EA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCBD3BBA-9BE2-439B-936B-E621014B7EA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCBD3BBA-9BE2-439B-936B-E621014B7EA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCBD3BBA-9BE2-439B-936B-E621014B7EA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A00B4317-7CE0-4B05-B8EF-045DAA7FD725}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A00B4317-7CE0-4B05-B8EF-045DAA7FD725}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A00B4317-7CE0-4B05-B8EF-045DAA7FD725}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A00B4317-7CE0-4B05-B8EF-045DAA7FD725}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

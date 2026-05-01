@@ -1,0 +1,261 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Rimshot.Inspector.MainWindow"
+        Title="Rimshot Inspector"
+        Icon="avares://Rimshot.Core/Assets/icon.png"
+        Width="720" Height="600"
+        MinWidth="480" MinHeight="400"
+        Background="#0A0A0A">
+
+    <DockPanel>
+
+        <!-- RIMSHOT INSPECTOR Header Bar -->
+        <Border DockPanel.Dock="Top"
+                Background="#141414"
+                BorderBrush="#FFD700"
+                BorderThickness="0,0,0,2"
+                Padding="14,10">
+            <TextBlock Text="RIMSHOT INSPECTOR"
+                       FontFamily="{StaticResource BebasNeue}"
+                       FontSize="42"
+                       Foreground="#FFD700"
+                       VerticalAlignment="Center"/>
+        </Border>
+
+        <Grid>
+
+            <!-- Drop Zone — visible until a file is loaded -->
+            <Border x:Name="DropZone"
+                    BorderBrush="#FFD700"
+                    BorderThickness="2"
+                    CornerRadius="8"
+                    Margin="40"
+                    Background="#141414">
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="12">
+                    <TextBlock Text="DROP A .MID FILE HERE"
+                               FontFamily="{StaticResource BebasNeue}"
+                               FontSize="28"
+                               Foreground="#FFD700"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="or"
+                               Foreground="#888888"
+                               FontSize="13"
+                               HorizontalAlignment="Center"/>
+                    <Button x:Name="BrowseButton"
+                            Content="BROWSE…"
+                            HorizontalAlignment="Center"
+                            Background="Transparent"
+                            BorderBrush="#FFD700"
+                            BorderThickness="1"
+                            Foreground="#FFD700"
+                            Padding="16,6"
+                            Click="OnBrowseClicked"/>
+                    <TextBlock x:Name="ErrorLabel"
+                               Foreground="#FF1493"
+                               FontSize="12"
+                               HorizontalAlignment="Center"
+                               IsVisible="False"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Results -->
+            <ScrollViewer x:Name="ResultsScroll"
+                          IsVisible="False"
+                          VerticalScrollBarVisibility="Auto"
+                          Padding="20,16">
+                <StackPanel Spacing="20" MaxWidth="660">
+
+                    <!-- File Info -->
+                    <StackPanel Spacing="6">
+                        <TextBlock x:Name="FileNameLabel"
+                                   FontFamily="{StaticResource BebasNeue}"
+                                   FontSize="22"
+                                   Foreground="#FFD700"/>
+                        <WrapPanel Orientation="Horizontal">
+                            <TextBlock x:Name="FormatLabel"     Foreground="#888888" FontSize="12" Margin="0,0,16,0"/>
+                            <TextBlock x:Name="TrackCountLabel" Foreground="#888888" FontSize="12" Margin="0,0,16,0"/>
+                            <TextBlock x:Name="DurationLabel"   Foreground="#888888" FontSize="12" Margin="0,0,16,0"/>
+                            <TextBlock x:Name="NoteCountLabel"  Foreground="#888888" FontSize="12"/>
+                        </WrapPanel>
+                    </StackPanel>
+
+                    <Border Height="1" Background="#333333"/>
+
+                    <!-- Tempo -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="TEMPO"
+                                   FontFamily="{StaticResource BebasNeue}"
+                                   FontSize="16"
+                                   Foreground="#888888"/>
+                        <TextBlock x:Name="PrimaryBpmLabel"
+                                   FontFamily="{StaticResource BebasNeue}"
+                                   FontSize="32"
+                                   Foreground="White"/>
+                        <ItemsControl x:Name="TempoChangesList" IsVisible="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:CompileBindings="False">
+                                    <TextBlock Foreground="#888888" FontSize="12"
+                                               Text="{Binding DisplayText}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- Time Signatures -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="TIME SIGNATURE"
+                                   FontFamily="{StaticResource BebasNeue}"
+                                   FontSize="16"
+                                   Foreground="#888888"/>
+                        <ItemsControl x:Name="TimeSigList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:CompileBindings="False">
+                                    <TextBlock Foreground="White"
+                                               FontFamily="{StaticResource BebasNeue}"
+                                               FontSize="18"
+                                               Text="{Binding DisplayText}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <Border Height="1" Background="#333333"/>
+
+                    <!-- Channel Breakdown -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="CHANNEL BREAKDOWN"
+                                   FontFamily="{StaticResource BebasNeue}"
+                                   FontSize="16"
+                                   Foreground="#888888"/>
+                        <ItemsControl x:Name="ChannelList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:CompileBindings="False">
+                                    <Border Padding="10,6" Margin="0,2"
+                                            Background="#141414" CornerRadius="4">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding ChannelLabel}"
+                                                       FontFamily="{StaticResource BebasNeue}"
+                                                       FontSize="15"
+                                                       Foreground="{Binding ChannelColor}"
+                                                       Width="90"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding RoleLabel}"
+                                                       Foreground="#888888"
+                                                       FontSize="12"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding NoteCountLabel}"
+                                                       Foreground="White"
+                                                       FontSize="12"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- GM Drum Instruments (channel 10) -->
+                    <StackPanel x:Name="DrumSection" IsVisible="False" Spacing="8">
+                        <Border Height="1" Background="#333333"/>
+                        <TextBlock Text="GM DRUM INSTRUMENTS (CH 10)"
+                                   FontFamily="{StaticResource BebasNeue}"
+                                   FontSize="16"
+                                   Foreground="#888888"/>
+                        <ItemsControl x:Name="DrumInstrumentList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:CompileBindings="False">
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,2">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding InstrumentName}"
+                                                   Foreground="White"
+                                                   FontSize="13"/>
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding HitCountLabel}"
+                                                   Foreground="#FFD700"
+                                                   FontSize="13"
+                                                   HorizontalAlignment="Right"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- Rimshot Kit Coverage -->
+                    <StackPanel x:Name="KitCoverageSection" IsVisible="False" Spacing="8">
+                        <Border Height="1" Background="#333333"/>
+                        <TextBlock Text="RIMSHOT KIT COVERAGE"
+                                   FontFamily="{StaticResource BebasNeue}"
+                                   FontSize="16"
+                                   Foreground="#888888"/>
+                        <ItemsControl x:Name="KitCoverageList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:CompileBindings="False">
+                                    <Border Padding="10,6" Margin="0,2"
+                                            Background="#141414" CornerRadius="4">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding LaneLabel}"
+                                                       FontFamily="{StaticResource BebasNeue}"
+                                                       FontSize="15"
+                                                       Foreground="{Binding LaneColor}"
+                                                       Width="60"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding StatusLabel}"
+                                                       Foreground="#888888"
+                                                       FontSize="12"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding HitCountLabel}"
+                                                       Foreground="{Binding HitCountColor}"
+                                                       FontSize="13"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <StackPanel x:Name="UnmappedSection" IsVisible="False" Spacing="4" Margin="0,8,0,0">
+                            <TextBlock Text="UNMAPPED DRUM NOTES"
+                                       FontFamily="{StaticResource BebasNeue}"
+                                       FontSize="13"
+                                       Foreground="#FF1493"/>
+                            <ItemsControl x:Name="UnmappedList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:CompileBindings="False">
+                                        <Grid ColumnDefinitions="*,Auto" Margin="0,1">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Label}"
+                                                       Foreground="#888888"
+                                                       FontSize="12"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding HitCountLabel}"
+                                                       Foreground="#888888"
+                                                       FontSize="12"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Button Content="LOAD ANOTHER FILE"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            BorderBrush="#444444"
+                            BorderThickness="1"
+                            Foreground="#888888"
+                            Padding="14,6"
+                            Margin="0,8,0,0"
+                            Click="OnLoadAnotherClicked"/>
+
+                </StackPanel>
+            </ScrollViewer>
+
+        </Grid>
+    </DockPanel>
+</Window>

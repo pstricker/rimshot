@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Avalonia.Media;
 
-namespace Rimshot.Models;
+namespace Rimshot.Core.Models;
 
 public record DrumLane(int Index, string Label, int[] NoteNumbers, Color Color)
 {

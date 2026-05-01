@@ -1,5 +1,5 @@
 using System;
 
-namespace Rimshot.Models;
+namespace Rimshot.Core.Models;
 
 public record FallingCue(int Lane, DateTime ScheduledHitTime);

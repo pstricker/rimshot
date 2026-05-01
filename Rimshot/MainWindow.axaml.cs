@@ -1,10 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Input;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using Rimshot.Models;
+using Rimshot.Core.Models;
+using Rimshot.Core.Services;
 using Rimshot.Services;
 using static Rimshot.Services.CueEngineState;
 
@@ -17,15 +22,31 @@ public partial class MainWindow : Window
     private readonly AudioService _audio = new();
     private readonly MetronomeService _metronome = new();
     private readonly ObservableCollection<string> _hits = [];
+    private readonly ObservableCollection<Song> _songItems = new(SongLibrary.AllItems);
     private bool _connected;
     private bool _hiHatOpen = false;
     private bool _suppressBpmUpdate = false;
+    private bool _autoPlay = false;
 
     public MainWindow()
     {
         InitializeComponent();
 
+        AddHandler(KeyDownEvent, OnKeyDownTunnel, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        AddHandler(KeyUpEvent, OnKeyUpTunnel, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+
         HitLog.ItemsSource = _hits;
+
+        SongCombo.ItemsSource = _songItems;
+        SongCombo.DisplayMemberBinding = new Binding("Name");
+        SongCombo.SelectedIndex = 0;
+
+        _cueEngine.SongEnded += (_, _) =>
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                UpdateTransportButtons();
+                SongStatusLabel.Text = "Finished";
+            });
 
         var devices = _midi.GetInputDevices();
         DeviceCombo.ItemsSource = devices;
@@ -48,6 +69,7 @@ public partial class MainWindow : Window
             _suppressBpmUpdate = false;
         };
         TheTempoView.SubdivisionChanged += sub => _metronome.Subdivision = sub;
+
     }
 
     private void OnConnectClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -102,6 +124,7 @@ public partial class MainWindow : Window
 
     private void OnRestartClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        TheCueView.ClearCues();
         _cueEngine.Restart();
         _metronome.Start();
         UpdateTransportButtons();
@@ -122,11 +145,72 @@ public partial class MainWindow : Window
         TheTempoView.SetBpm(bpm);
     }
 
+    private void OnSongSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (SongCombo.SelectedItem is not Song selected) return;
+
+        if (selected == SongLibrary.LoadFromFile)
+        {
+            _ = LoadFromFileAsync();
+            return;
+        }
+
+        _cueEngine.LoadSong(selected);
+        TheCueView.SetActiveLanes(GetActiveLanes(selected));
+        SongStatusLabel.Text = $"{selected.Notes.Length} notes";
+    }
+
+    private async Task LoadFromFileAsync()
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Load MIDI File",
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("MIDI Files") { Patterns = ["*.mid", "*.midi"] },
+            ],
+        });
+
+        if (files.Count == 0)
+        {
+            SongCombo.SelectedIndex = 0;
+            return;
+        }
+
+        try
+        {
+            SongStatusLabel.Text = "Loading…";
+            var song = await Task.Run(() => SongLoader.Load(files[0].Path.LocalPath));
+
+            // Insert before the sentinel ("Load from file…") at the end
+            _songItems.Insert(_songItems.Count - 1, song);
+            SongCombo.SelectedItem = song;
+
+            _cueEngine.LoadSong(song);
+            TheCueView.SetActiveLanes(GetActiveLanes(song));
+            SongStatusLabel.Text = $"{song.Notes.Length} notes, {song.TotalEighths / 8.0:F0} bars";
+        }
+        catch (Exception ex)
+        {
+            SongStatusLabel.Text = $"Error: {ex.Message}";
+            SongCombo.SelectedIndex = 0;
+        }
+    }
+
     private void OnClearClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
         _hits.Clear();
 
+    private void OnAutoPlayChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _autoPlay = AutoPlayCheck.IsChecked == true;
+        TheCueView.AutoPlay = _autoPlay;
+    }
+
     private void OnDrumHit(object? sender, DrumHit hit)
     {
+        if (_autoPlay) return;
+
         Dispatcher.UIThread.InvokeAsync(() =>
         {
             for (int i = 0; i < _kitLanes.Count; i++)
@@ -164,21 +248,27 @@ public partial class MainWindow : Window
     private static readonly IReadOnlyList<DrumLane> _kitLanes = DrumLane.StandardKit();
     private readonly System.Collections.Generic.HashSet<Key> _heldKeys = [];
 
-    protected override void OnKeyDown(KeyEventArgs e)
+    private void OnKeyDownTunnel(object? sender, KeyEventArgs e)
     {
-        base.OnKeyDown(e);
         if (!_heldKeys.Add(e.Key)) return; // already held — suppress repeat
         if (!_keyToLane.TryGetValue(e.Key, out int lane)) return;
 
         var laneDef = _kitLanes[lane];
         var hit = new DrumHit(System.DateTime.Now, laneDef.Label, laneDef.NoteNumbers[0], 100);
         _midi.TriggerManualHit(hit);
+        e.Handled = true; // prevent focused controls (e.g. ComboBox) from consuming drum keys
     }
 
-    protected override void OnKeyUp(KeyEventArgs e)
+    private void OnKeyUpTunnel(object? sender, KeyEventArgs e)
     {
-        base.OnKeyUp(e);
         _heldKeys.Remove(e.Key);
+    }
+
+    private static IReadOnlyList<DrumLane> GetActiveLanes(Song song)
+    {
+        if (song.Notes.Length == 0) return DrumLane.StandardKit();
+        var usedIndices = new HashSet<int>(song.Notes.Select(n => n.Lane));
+        return DrumLane.StandardKit().Where(l => usedIndices.Contains(l.Index)).ToList();
     }
 
     protected override void OnOpened(EventArgs e)

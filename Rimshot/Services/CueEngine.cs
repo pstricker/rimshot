@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Rimshot.Models;
+using Rimshot.Core.Models;
 
 namespace Rimshot.Services;
 
@@ -8,20 +8,6 @@ public enum CueEngineState { Stopped, Running, Paused }
 
 public class CueEngine
 {
-    // Base demo pattern: (eighthNoteOffset within bar, laneIndex)
-    // Lane order: HH=0, CR=1, SN=2, TM1=3, TM2=4, BD=5, FTM=6, RD=7
-    private static readonly (int Offset, int Lane)[] _basePattern =
-    [
-        (0, 0), (0, 5),   // beat 1: HH + BD
-        (1, 0),            // & 1:    HH
-        (2, 0), (2, 2),   // beat 2: HH + SN
-        (3, 0),            // & 2:    HH
-        (4, 0), (4, 5),   // beat 3: HH + BD
-        (5, 0),            // & 3:    HH
-        (6, 0), (6, 2),   // beat 4: HH + SN
-        (7, 0),            // & 4:    HH
-    ];
-
     private int _bpm = 90;
     public int Bpm
     {
@@ -33,24 +19,36 @@ public class CueEngine
             {
                 _pendingCues.Clear();
                 _pendingGridLines.Clear();
-                _nextBarTime = DateTime.Now;
                 _nextGridLineTime = DateTime.Now;
-                _barIndex = 0;
+                _noteIndex = 0;
+                _nextLoopOffset = 0.0;
+                _songEnded = false;
             }
         }
     }
 
-    public CueEngineState State       { get; private set; } = CueEngineState.Stopped;
-    public DateTime       SongStartTime { get; private set; } = DateTime.MinValue;
+    public CueEngineState State         { get; private set; } = CueEngineState.Stopped;
+    public DateTime        SongStartTime { get; private set; } = DateTime.MinValue;
+
+    public event EventHandler? SongEnded;
 
     private double EighthNoteMs => 60000.0 / (_bpm * 2.0);
 
+    private Song _currentSong = SongLibrary.BuiltIn[0];
+    private int _noteIndex;
+    private double _nextLoopOffset;
+    private bool _songEnded;
+
     private readonly Queue<FallingCue> _pendingCues = new();
     private readonly Queue<DateTime> _pendingGridLines = new();
-    private DateTime _nextBarTime;
     private DateTime _nextGridLineTime;
     private DateTime _pausedAt;
-    private int _barIndex;
+
+    public void LoadSong(Song song)
+    {
+        _currentSong = song;
+        if (State == CueEngineState.Running) Restart();
+    }
 
     public void Play()
     {
@@ -58,7 +56,6 @@ public class CueEngine
         {
             case CueEngineState.Paused:
                 var pauseDuration = DateTime.Now - _pausedAt;
-                _nextBarTime      += pauseDuration;
                 _nextGridLineTime += pauseDuration;
                 SongStartTime     += pauseDuration;
                 State = CueEngineState.Running;
@@ -79,10 +76,11 @@ public class CueEngine
     public void Restart()
     {
         var now = DateTime.Now;
-        _nextBarTime      = now;
         _nextGridLineTime = now;
         SongStartTime     = now;
-        _barIndex = 0;
+        _noteIndex        = 0;
+        _nextLoopOffset   = 0.0;
+        _songEnded        = false;
         _pendingCues.Clear();
         _pendingGridLines.Clear();
         State = CueEngineState.Running;
@@ -101,6 +99,13 @@ public class CueEngine
         var result = new List<FallingCue>();
         while (_pendingCues.Count > 0 && _pendingCues.Peek().ScheduledHitTime <= lookAheadUntil)
             result.Add(_pendingCues.Dequeue());
+
+        if (_songEnded && _pendingCues.Count == 0)
+        {
+            Stop();
+            SongEnded?.Invoke(this, EventArgs.Empty);
+        }
+
         return result;
     }
 
@@ -115,20 +120,33 @@ public class CueEngine
 
     private void SeedCuesUpTo(DateTime until)
     {
-        while (_nextBarTime <= until)
+        if (_songEnded || _currentSong.Notes.Length == 0) return;
+        var notes = _currentSong.Notes;
+        double eighthMs = EighthNoteMs;
+
+        while (true)
         {
-            var barStart = _nextBarTime;
-            double eighthMs = EighthNoteMs;
+            if (_noteIndex >= notes.Length)
+            {
+                if (_currentSong.ShouldLoop)
+                {
+                    _noteIndex = 0;
+                    _nextLoopOffset += _currentSong.TotalEighths;
+                }
+                else
+                {
+                    _songEnded = true;
+                    break;
+                }
+            }
 
-            foreach (var (offset, lane) in _basePattern)
-                _pendingCues.Enqueue(new FallingCue(lane, barStart + TimeSpan.FromMilliseconds(offset * eighthMs)));
+            var hitTime = SongStartTime + TimeSpan.FromMilliseconds(
+                (_nextLoopOffset + notes[_noteIndex].OffsetInEighths) * eighthMs);
 
-            // Crash on beat 1 every 4 bars (CR is lane 1)
-            if (_barIndex % 4 == 0)
-                _pendingCues.Enqueue(new FallingCue(1, barStart));
+            if (hitTime > until) break;
 
-            _nextBarTime = barStart + TimeSpan.FromMilliseconds(8 * eighthMs);
-            _barIndex++;
+            _pendingCues.Enqueue(new FallingCue(notes[_noteIndex].Lane, hitTime));
+            _noteIndex++;
         }
     }
 

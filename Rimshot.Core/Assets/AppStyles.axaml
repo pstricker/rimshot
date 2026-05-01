@@ -3,8 +3,8 @@
 
     <Styles.Resources>
         <!-- Embedded fonts -->
-        <FontFamily x:Key="BebasNeue">avares://Rimshot/Assets/Fonts#Bebas Neue</FontFamily>
-        <FontFamily x:Key="RobotoMono">avares://Rimshot/Assets/Fonts#Roboto Mono</FontFamily>
+        <FontFamily x:Key="BebasNeue">avares://Rimshot.Core/Assets/Fonts#Bebas Neue</FontFamily>
+        <FontFamily x:Key="RobotoMono">avares://Rimshot.Core/Assets/Fonts#Roboto Mono</FontFamily>
 
         <!-- Blink-182 palette -->
         <SolidColorBrush x:Key="AppBgBrush"    Color="#0A0A0A"/>

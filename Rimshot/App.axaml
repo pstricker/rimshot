@@ -5,6 +5,6 @@
 
     <Application.Styles>
         <FluentTheme />
-        <StyleInclude Source="avares://Rimshot/Assets/AppStyles.axaml"/>
+        <StyleInclude Source="avares://Rimshot.Core/Assets/AppStyles.axaml"/>
     </Application.Styles>
 </Application>

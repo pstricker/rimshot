@@ -25,6 +25,20 @@ No MIDI kit? No problem. Your keyboard works too.
 ### 🎯 Note Cues
 Notes scroll from right to left and must be hit as they cross the white hit-zone line. You've got a **±150ms window** — tight but fair. Land it on the metronome beat and you'll get a sick lime green ring. Miss the beat and you get the lane color. Miss entirely and you get to think about what you've done.
 
+### 🎼 Songs
+Pick a built-in pattern from the **SONG** dropdown and the engine loops it forever:
+
+- **Rock Beat** — your bread and butter
+- **4-on-the-Floor** — kick on every quarter
+- **Single Stroke Roll** — RLRLRLRL on the snare
+- **Double Stroke Roll** — RRLLRRLL
+- **Paradiddle** — RLRR LRLL, the rudiment that paid for your kit
+
+Or pick **Load from file…** to drop in any `.mid` file. The lane strip auto-shrinks to show only the drums actually used by the current song — no point staring at a ride lane for a snare-only exercise.
+
+### 🤖 Auto Play
+Flip the **AUTO PLAY** checkbox and Rimshot plays the song for you — perfect cues, perfect timing, perfect ego death. Great for hearing what a pattern *should* sound like before you embarrass yourself trying it.
+
 ### 🥁 8-Lane Drum Kit
 
 | Lane | Piece | MIDI Notes | Color |
@@ -105,6 +119,20 @@ Every time the app opens, it plays `rimshot.wav`. Because of course it does.
 
 ---
 
+## 🔍 Rimshot Inspector
+
+A separate companion app for staring at MIDI files before you load them. Drag a `.mid` onto the drop zone (or hit BROWSE) and Inspector tells you:
+
+- **Tempo** — primary BPM, plus every tempo change with timestamps
+- **Time signature** — including mid-song changes
+- **Channel breakdown** — which channels carry notes, and which look like a GM drum channel
+- **GM drum instruments** — every drum note name with hit count
+- **Rimshot kit coverage** — which of the 8 lanes the file actually uses, plus a list of any drum notes that *don't* map to a Rimshot lane (so you know what'll be silent if you load it in the main app)
+
+Useful for sanity-checking a MIDI before wondering why nothing's scrolling.
+
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -118,38 +146,60 @@ cd rimshot
 dotnet run --project Rimshot/Rimshot.csproj
 ```
 
+To launch the Inspector instead:
+```bash
+dotnet run --project Rimshot.Inspector/Rimshot.Inspector.csproj
+```
+
 ### Connect Your Kit
 1. Plug in your MIDI drum kit
 2. Select it from the **device dropdown** in the toolbar
 3. Click **CONNECT**
-4. Hit **▶ PLAY**
-5. Start drumming
+4. Pick a song from the **SONG** dropdown
+5. Hit **▶ PLAY** (or **↺ RESTART** to start the song over)
+6. Start drumming
 
 ---
 
 ## Project Structure
 
+The solution has three projects:
+
 ```
-Rimshot/
-├── Models/
-│   ├── DrumLane.cs       — lane definitions, MIDI notes, colors
-│   ├── DrumHit.cs        — hit event record
-│   └── FallingCue.cs     — scheduled note cue
-├── Services/
-│   ├── AudioService.cs   — OpenAL playback, WAV loading
-│   ├── CueEngine.cs      — pattern generator and playback timing
-│   ├── DrumSynth.cs      — procedural audio fallback
-│   ├── MetronomeService  — beat tracking and subdivision
-│   ├── MidiService.cs    — MIDI device I/O (DryWetMidi)
-│   └── WavLoader.cs      — 16/24-bit PCM WAV parser
-├── Views/
-│   ├── CueView           — main 60fps canvas (notes, pads, rings)
-│   ├── TempoView         — BPM + metronome subdivision UI
-│   └── MainWindow        — toolbar, tabs, transport controls
-├── Assets/
-│   ├── Fonts/            — Bebas Neue, Roboto Mono
-│   └── AppStyles.axaml   — global styles and color palette
-└── Sounds/               — WAV samples (hh, sn, bd, cr, rd, toms...)
+Rimshot.sln
+├── Rimshot/                          — main app (the trainer)
+│   ├── Services/
+│   │   ├── AudioService.cs           — OpenAL playback, WAV loading
+│   │   ├── CueEngine.cs              — song playback and cue scheduling
+│   │   ├── DrumSynth.cs              — procedural audio fallback
+│   │   ├── MetronomeService.cs       — beat tracking and subdivision
+│   │   ├── MidiService.cs            — MIDI device I/O (DryWetMidi)
+│   │   ├── SongLibrary.cs            — built-in pattern catalog
+│   │   └── WavLoader.cs              — 16/24-bit PCM WAV parser
+│   ├── Views/
+│   │   ├── CueView                   — main 60fps canvas (notes, pads, rings)
+│   │   └── TempoView                 — BPM + metronome subdivision UI
+│   ├── MainWindow                    — toolbar, song picker, tabs, transport
+│   └── Sounds/                       — WAV samples (hh, sn, bd, cr, rd, toms...)
+│
+├── Rimshot.Core/                     — shared library (used by both apps)
+│   ├── Models/
+│   │   ├── DrumLane.cs               — lane definitions, MIDI notes, colors
+│   │   ├── DrumHit.cs                — hit event record
+│   │   ├── FallingCue.cs             — scheduled note cue
+│   │   ├── PatternNote.cs            — note within a song
+│   │   └── Song.cs                   — song record (notes + length + loop flag)
+│   ├── Services/
+│   │   ├── MidiAnalysis.cs           — MIDI file inspection (used by Inspector)
+│   │   └── SongLoader.cs             — .mid → Song conversion
+│   ├── DrumMap.cs                    — GM drum note name lookup
+│   └── Assets/
+│       ├── Fonts/                    — Bebas Neue, Roboto Mono
+│       ├── AppStyles.axaml           — global styles and color palette
+│       └── icon.png
+│
+└── Rimshot.Inspector/                — companion app for analyzing .mid files
+    └── MainWindow                    — drag-drop, kit coverage, tempo readout
 ```
 
 ---

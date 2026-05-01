@@ -23,3 +23,10 @@ project.lock.json
 # Logs and temp
 *.log
 *.tmp
+
+# CLAUDE
+.claude/
+CLAUDE.MD
+
+# Design
+mockups/

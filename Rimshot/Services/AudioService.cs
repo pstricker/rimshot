@@ -11,6 +11,9 @@ public unsafe class AudioService : IDisposable
     private const int SampleRate = 44100;
 
     private static readonly string[] _fileNames = ["hh", "cr", "sn", "tm_hi", "tm_low", "bd", "tm_fl", "rd"];
+    // Per-lane gain trim — compensates for sample-level loudness differences.
+    // BD is boosted because it sits in a low-frequency band that gets masked by hats/snares.
+    private static readonly float[] _laneGains  = [1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 2.5f, 1.0f, 1.0f];
 
     private readonly AL? _al;
     private readonly ALContext? _alc;
@@ -136,7 +139,7 @@ public unsafe class AudioService : IDisposable
         uint source = GetFreeSource(lane);
         _al!.SourceStop(source);
         _al.SetSourceProperty(source, SourceInteger.Buffer, (int)buf);
-        _al.SetSourceProperty(source, SourceFloat.Gain, Math.Clamp(gain, 0f, 1f));
+        _al.SetSourceProperty(source, SourceFloat.Gain, Math.Clamp(gain * _laneGains[lane], 0f, 3f));
         _al.SourcePlay(source);
     }
 
