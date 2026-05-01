@@ -1,0 +1,25 @@
+# Build output
+bin/
+obj/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+
+# Logs and temp
+*.log
+*.tmp
