@@ -20,6 +20,10 @@ public unsafe class AudioService : IDisposable
     private Device* _device;
     private Context* _context;
 
+    internal AL? Al => _al;
+    internal bool IsInitialized => _initialized;
+    internal uint CreateStreamingSource() => _al!.GenSource();
+
     private readonly uint[] _buffers = new uint[LaneCount];
     private uint _hhOpenBuffer;
     private uint _rimshotBuffer;

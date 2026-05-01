@@ -5,4 +5,8 @@ public record Song(
     PatternNote[] Notes,    // sorted by OffsetInEighths ascending
     double TotalEighths,    // loop/end boundary; 8.0 = one 4/4 bar
     bool ShouldLoop
-);
+)
+{
+    public MelodicTrack? MelodicTrack { get; init; }
+    public bool HasBackingTrack => MelodicTrack?.HasContent == true;
+}
