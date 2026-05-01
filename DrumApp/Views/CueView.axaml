@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="DrumApp.Views.CueView">
     <Grid>
-        <Canvas x:Name="CueCanvas" Background="#1A1A2E" ClipToBounds="True" />
+        <Canvas x:Name="CueCanvas" Background="#000000" ClipToBounds="True" />
         <ToggleButton x:Name="MetronomeToggle"
                       Content="Metronome"
                       HorizontalAlignment="Right" VerticalAlignment="Top"

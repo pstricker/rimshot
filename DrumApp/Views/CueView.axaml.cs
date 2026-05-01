@@ -124,7 +124,7 @@ public partial class CueView : UserControl
         if (w <= 0 || h <= 0) return;
 
         _canvasW  = w;
-        _hitZoneX = w * HitZoneFraction;
+        _hitZoneX = _padCX[5]; // centered above BD
 
         for (int i = 0; i < LaneCount; i++)
         {
