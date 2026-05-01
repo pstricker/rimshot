@@ -123,8 +123,7 @@ public partial class CueView : UserControl
         double h = canvas.Bounds.Height;
         if (w <= 0 || h <= 0) return;
 
-        _canvasW  = w;
-        _hitZoneX = _padCX[5]; // centered above BD
+        _canvasW = w;
 
         for (int i = 0; i < LaneCount; i++)
         {
@@ -132,6 +131,8 @@ public partial class CueView : UserControl
             _padCY[i]     = _padLayout[i].Yf * h;
             _padDiamPx[i] = _padLayout[i].Df * h;
         }
+
+        _hitZoneX = _padCX[5]; // centered above BD
 
         // Evenly-spaced horizontal tracks in the upper portion
         double trackTop    = h * 0.03;
