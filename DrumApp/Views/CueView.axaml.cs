@@ -22,16 +22,21 @@ public partial class CueView : UserControl
     private readonly SolidColorBrush[] _laneBrushes;
     private DispatcherTimer? _timer;
 
-    // Radial arc layout
-    private static readonly double[] _angleDeg    = [165, 140,  75, 110,  90,  55, 25];
-    private static readonly double[] _radiusFrac  = [0.78, 0.78, 0.58, 0.58, 0.38, 0.58, 0.78];
-    private static readonly double[] _padDiamFrac = [0.08, 0.08, 0.09, 0.09, 0.14, 0.09, 0.08];
-    private double _arcCX, _arcCY, _canvasH;
+    // Kit layout — positions derived from top-down drum kit image, kit in bottom 38% of canvas
+    // (Xf = fraction of canvas width, Yf = fraction of canvas height, Df = fraction of canvas height)
+    private static readonly (double Xf, double Yf, double Df)[] _padLayout =
+    [
+        (0.22, 0.83, 0.080), // HH  — left, lower
+        (0.28, 0.64, 0.080), // CR  — upper-left
+        (0.40, 0.88, 0.085), // SN  — front-left, low
+        (0.46, 0.69, 0.075), // TM-hi — upper-center
+        (0.50, 0.82, 0.115), // BD  — center, large
+        (0.60, 0.91, 0.085), // TM-floor — front-right, low
+        (0.72, 0.64, 0.085), // RD  — upper-right
+    ];
     private readonly double[] _padCX     = new double[LaneCount];
     private readonly double[] _padCY     = new double[LaneCount];
-    private readonly double[] _padRadius = new double[LaneCount];
     private readonly double[] _padDiamPx = new double[LaneCount];
-    private readonly double[] _angleRad  = new double[LaneCount];
 
     // Fixed canvas elements
     private readonly Ellipse?[] _pads = new Ellipse?[LaneCount];
@@ -111,22 +116,15 @@ public partial class CueView : UserControl
         double h = canvas.Bounds.Height;
         if (w <= 0 || h <= 0) return;
 
-        _canvasH = h;
-        _arcCX   = w / 2;
-        _arcCY   = h;
-
         for (int i = 0; i < LaneCount; i++)
         {
-            _angleRad[i] = _angleDeg[i] * Math.PI / 180.0;
-            _padRadius[i] = _radiusFrac[i] * h;
-            _padDiamPx[i] = _padDiamFrac[i] * h;
-            _padCX[i] = _arcCX + _padRadius[i] * Math.Cos(_angleRad[i]);
-            _padCY[i] = _arcCY - _padRadius[i] * Math.Sin(_angleRad[i]);
+            _padCX[i]     = _padLayout[i].Xf * w;
+            _padCY[i]     = _padLayout[i].Yf * h;
+            _padDiamPx[i] = _padLayout[i].Df * h;
         }
 
-        double fontSize = 11.0;
+        double fontSize = Math.Clamp(h * 0.020, 10, 13);
 
-        // Pads and labels
         for (int i = 0; i < LaneCount; i++)
         {
             if (_pads[i] == null)
@@ -146,47 +144,31 @@ public partial class CueView : UserControl
             Canvas.SetLeft(p, _padCX[i] - _padDiamPx[i] / 2.0);
             Canvas.SetTop(p,  _padCY[i] - _padDiamPx[i] / 2.0);
 
-            double labelR = _padRadius[i] + _padDiamPx[i] / 2 + fontSize + 2;
-            double labelX = _arcCX + labelR * Math.Cos(_angleRad[i]) - 30;
-            double labelY = _arcCY - labelR * Math.Sin(_angleRad[i]) - fontSize / 2;
             var l = _padLabels[i]!;
             l.Text     = _lanes[i].Label;
             l.FontSize = fontSize;
-            l.Width    = 60;
-            Canvas.SetLeft(l, labelX);
-            Canvas.SetTop(l,  labelY);
+            l.Width    = 50;
+            Canvas.SetLeft(l, _padCX[i] - 25);
+            Canvas.SetTop(l,  _padCY[i] + _padDiamPx[i] / 2.0 + 2);
         }
 
-        // HH open/closed state label
         if (_hhStateLabel == null)
         {
-            _hhStateLabel = new TextBlock
-            {
-                Text = "●",
-                Foreground = _laneBrushes[0],
-                TextAlignment = TextAlignment.Center,
-            };
+            _hhStateLabel = new TextBlock { Text = "●", Foreground = _laneBrushes[0], TextAlignment = TextAlignment.Center };
             canvas.Children.Add(_hhStateLabel);
         }
         _hhStateLabel.FontSize = fontSize;
-        {
-            double labelR = _padRadius[0] + _padDiamPx[0] / 2 + fontSize + 2;
-            double extraR = labelR + fontSize + 2;
-            Canvas.SetLeft(_hhStateLabel, _arcCX + extraR * Math.Cos(_angleRad[0]) - 30);
-            Canvas.SetTop(_hhStateLabel,  _arcCY - extraR * Math.Sin(_angleRad[0]) - fontSize / 2);
-        }
+        _hhStateLabel.Width    = 50;
+        Canvas.SetLeft(_hhStateLabel, _padCX[0] - 25);
+        Canvas.SetTop(_hhStateLabel,  _padCY[0] + _padDiamPx[0] / 2.0 + fontSize + 4);
 
-        // Reposition active cues
         var now = DateTime.Now;
         foreach (var (visual, hitTime, lane) in _activeCues)
         {
             var (cx, cy) = CuePosition(hitTime, now, lane);
-            Canvas.SetLeft(visual, cx - _padDiamPx[lane] * 0.35);
-            Canvas.SetTop(visual,  cy - _padDiamPx[lane] * 0.125);
+            Canvas.SetLeft(visual, cx - _padDiamPx[lane] * 0.45);
+            Canvas.SetTop(visual,  cy - _padDiamPx[lane] * 0.15);
         }
-
-        // Drain grid lines — no rendering
-        // _activeGridLines stays empty in this layout
     }
 
     private void OnTick(object? sender, EventArgs e)
@@ -207,15 +189,15 @@ public partial class CueView : UserControl
         {
             foreach (var cue in Engine.DrainCues(lookAhead))
             {
-                double cW = _padDiamPx[cue.Lane] * 0.70;
-                double cH = _padDiamPx[cue.Lane] * 0.25;
+                double cW = _padDiamPx[cue.Lane] * 0.90;
+                double cH = _padDiamPx[cue.Lane] * 0.30;
                 var rect = new Rectangle
                 {
                     Width   = cW,
                     Height  = cH,
                     Fill    = _laneBrushes[cue.Lane],
-                    RadiusX = 3,
-                    RadiusY = 3,
+                    RadiusX = 4,
+                    RadiusY = 4,
                 };
                 var (cx, cy) = CuePosition(cue.ScheduledHitTime, now, cue.Lane);
                 Canvas.SetLeft(rect, cx - cW / 2);
@@ -239,16 +221,16 @@ public partial class CueView : UserControl
         for (int i = _activeCues.Count - 1; i >= 0; i--)
         {
             var (visual, hitTime, lane) = _activeCues[i];
-            if ((hitTime - now).TotalMilliseconds < -300)
+            var (cx, cy) = CuePosition(hitTime, now, lane);
+            if (cy > _padCY[lane] + _padDiamPx[lane])
             {
                 canvas.Children.Remove(visual);
                 _activeCues.RemoveAt(i);
             }
             else
             {
-                double cW = _padDiamPx[lane] * 0.70;
-                double cH = _padDiamPx[lane] * 0.25;
-                var (cx, cy) = CuePosition(hitTime, now, lane);
+                double cW = _padDiamPx[lane] * 0.90;
+                double cH = _padDiamPx[lane] * 0.30;
                 Canvas.SetLeft(visual, cx - cW / 2);
                 Canvas.SetTop(visual,  cy - cH / 2);
             }
@@ -289,11 +271,9 @@ public partial class CueView : UserControl
     private (double X, double Y) CuePosition(DateTime hitTime, DateTime now, int lane)
     {
         double remainingMs = (hitTime - now).TotalMilliseconds;
-        double progress = 1.0 - remainingMs / TravelMs;
-        double originR = _canvasH * 1.05;
-        double r = originR + progress * (_padRadius[lane] - originR);
-        return (_arcCX + r * Math.Cos(_angleRad[lane]),
-                _arcCY - r * Math.Sin(_angleRad[lane]));
+        double progress = 1.0 - remainingMs / TravelMs; // 0 = top of canvas, 1 = at pad
+        double y = -20 + progress * (_padCY[lane] + 20);
+        return (_padCX[lane], y);
     }
 
     private void OnDrumHit(object? sender, DrumHit hit)
