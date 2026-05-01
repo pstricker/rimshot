@@ -46,10 +46,15 @@ public partial class CueView : UserControl
     private readonly double[] _laneY = new double[LaneCount];
 
     // Fixed canvas elements — left-side indicators and kit pads
-    private readonly Ellipse?[]   _laneIndicators = new Ellipse?[LaneCount];
-    private readonly TextBlock?[] _laneIndLabels  = new TextBlock?[LaneCount];
-    private readonly Ellipse?[]   _pads           = new Ellipse?[LaneCount];
-    private readonly TextBlock?[] _padLabels      = new TextBlock?[LaneCount];
+    private readonly Ellipse?[]   _laneIndicators  = new Ellipse?[LaneCount];
+    private readonly Ellipse?[]   _indInnerRings   = new Ellipse?[LaneCount]; // cymbal inner ring on indicator
+    private readonly TextBlock?[] _laneIndLabels   = new TextBlock?[LaneCount];
+    private readonly Ellipse?[]   _pads            = new Ellipse?[LaneCount];
+    private readonly Ellipse?[]   _padInnerRings   = new Ellipse?[LaneCount]; // cymbal inner ring on pad
+    private readonly TextBlock?[] _padLabels       = new TextBlock?[LaneCount];
+
+    private static bool IsCymbal(int lane) => lane is 0 or 1 or 7;
+    private static bool IsDrum(int lane)   => lane is 2 or 3 or 4 or 6;
 
     // Beat grid: hit-zone line + scrolling subdivision lines
     private Line? _hitZoneLine;
@@ -202,11 +207,30 @@ public partial class CueView : UserControl
             }
 
             var indicator = _laneIndicators[i]!;
-            indicator.Width  = indDiam;
-            indicator.Height = indDiam;
-            indicator.Fill   = _isFlashing[i] ? Brushes.White : _laneBrushes[i];
+            indicator.Width          = indDiam;
+            indicator.Height         = indDiam;
+            indicator.Fill           = _isFlashing[i] ? Brushes.White : _laneBrushes[i];
+            indicator.Stroke          = IsDrum(i) ? Brushes.White : null;
+            indicator.StrokeThickness = IsDrum(i) ? Math.Max(1, indDiam * 0.07) : 0;
             Canvas.SetLeft(indicator, indCX - indDiam / 2);
             Canvas.SetTop(indicator,  _laneY[i] - indDiam / 2);
+
+            // Cymbal inner black ring
+            if (IsCymbal(i))
+            {
+                if (_indInnerRings[i] == null)
+                {
+                    var ring = new Ellipse { Fill = Brushes.Transparent, Stroke = Brushes.Black, ZIndex = 2 };
+                    _indInnerRings[i] = ring;
+                    canvas.Children.Add(ring);
+                }
+                double rDiam = indDiam * 0.82;
+                var ir = _indInnerRings[i]!;
+                ir.Width = rDiam; ir.Height = rDiam;
+                ir.StrokeThickness = Math.Max(0.5, indDiam * 0.030);
+                Canvas.SetLeft(ir, indCX - rDiam / 2);
+                Canvas.SetTop(ir,  _laneY[i] - rDiam / 2);
+            }
 
             var label = _laneIndLabels[i]!;
             label.Text     = _lanes[i].Label;
@@ -230,27 +254,49 @@ public partial class CueView : UserControl
         {
             if (_pads[i] == null)
             {
-                var pad = new Ellipse();
-                var lbl = new TextBlock { Foreground = Brushes.White, TextAlignment = TextAlignment.Center };
+                var pad = new Ellipse { ZIndex = 0 };
+                var lbl = new TextBlock { Foreground = Brushes.White, TextAlignment = TextAlignment.Center, ZIndex = 3 };
                 _pads[i]      = pad;
                 _padLabels[i] = lbl;
                 canvas.Children.Add(pad);
                 canvas.Children.Add(lbl);
             }
 
+            double diam = _padDiamPx[i];
             var p = _pads[i]!;
-            p.Width  = _padDiamPx[i];
-            p.Height = _padDiamPx[i];
-            p.Fill   = _isFlashing[i] ? Brushes.White : _laneBrushes[i];
-            Canvas.SetLeft(p, _padCX[i] - _padDiamPx[i] / 2.0);
-            Canvas.SetTop(p,  _padCY[i] - _padDiamPx[i] / 2.0);
+            p.Width           = diam;
+            p.Height          = diam;
+            p.Fill            = _isFlashing[i] ? Brushes.White : _laneBrushes[i];
+            p.Stroke          = IsDrum(i) ? Brushes.White : null;
+            p.StrokeThickness = IsDrum(i) ? Math.Max(2, diam * 0.05) : 0;
+            Canvas.SetLeft(p, _padCX[i] - diam / 2.0);
+            Canvas.SetTop(p,  _padCY[i] - diam / 2.0);
 
+            // Cymbal inner black ring
+            if (IsCymbal(i))
+            {
+                if (_padInnerRings[i] == null)
+                {
+                    var ring = new Ellipse { Fill = Brushes.Transparent, Stroke = Brushes.Black, ZIndex = 2 };
+                    _padInnerRings[i] = ring;
+                    canvas.Children.Add(ring);
+                }
+                double rDiam = diam * 0.84;
+                var ir = _padInnerRings[i]!;
+                ir.Width = rDiam; ir.Height = rDiam;
+                ir.StrokeThickness = Math.Max(1, diam * 0.028);
+                Canvas.SetLeft(ir, _padCX[i] - rDiam / 2);
+                Canvas.SetTop(ir,  _padCY[i] - rDiam / 2);
+            }
+
+            // Label centered inside the circle
+            double padFontSize = Math.Clamp(diam * 0.22, 10, 16);
             var l = _padLabels[i]!;
             l.Text     = _lanes[i].Label;
-            l.FontSize = fontSize;
-            l.Width    = 50;
-            Canvas.SetLeft(l, _padCX[i] - 25);
-            Canvas.SetTop(l,  _padCY[i] + _padDiamPx[i] / 2.0 + 2);
+            l.FontSize = padFontSize;
+            l.Width    = diam;
+            Canvas.SetLeft(l, _padCX[i] - diam / 2);
+            Canvas.SetTop(l,  _padCY[i] - padFontSize * 0.65);
         }
 
         var now = DateTime.Now;
