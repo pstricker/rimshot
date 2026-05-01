@@ -22,7 +22,7 @@ public partial class CueView : UserControl
     private readonly SolidColorBrush[] _laneBrushes;
     private DispatcherTimer? _timer;
 
-    // Kit layout — compressed toward bottom-center, matching top-down drum kit view
+    // Kit layout — bottom-center 2D reference display
     // (Xf = fraction of canvas width, Yf = fraction of canvas height, Df = fraction of canvas height)
     private static readonly (double Xf, double Yf, double Df)[] _padLayout =
     [
@@ -32,17 +32,24 @@ public partial class CueView : UserControl
         (0.44, 0.74, 0.110), // TM1 — upper center-left
         (0.56, 0.74, 0.110), // TM2 — upper center-right
         (0.50, 0.88, 0.120), // BD  — center
-        (0.69, 0.86, 0.130), // FTM — lower right
-        (0.67, 0.68, 0.125), // RD  — upper right
+        (0.62, 0.86, 0.130), // FTM — lower right
+        (0.60, 0.68, 0.125), // RD  — upper right
     ];
     private readonly double[] _padCX     = new double[LaneCount];
     private readonly double[] _padCY     = new double[LaneCount];
     private readonly double[] _padDiamPx = new double[LaneCount];
 
-    // Fixed canvas elements
-    private readonly Line?[]      _laneLines = new Line?[LaneCount];
-    private readonly Ellipse?[]   _pads      = new Ellipse?[LaneCount];
-    private readonly TextBlock?[] _padLabels = new TextBlock?[LaneCount];
+    // Horizontal lane track positions (computed in RebuildLayout)
+    private double   _canvasW;
+    private double   _laneSpacing;
+    private double   _hitZoneX;
+    private readonly double[] _laneY = new double[LaneCount];
+
+    // Fixed canvas elements — left-side indicators and kit pads
+    private readonly Ellipse?[]   _laneIndicators = new Ellipse?[LaneCount];
+    private readonly TextBlock?[] _laneIndLabels  = new TextBlock?[LaneCount];
+    private readonly Ellipse?[]   _pads           = new Ellipse?[LaneCount];
+    private readonly TextBlock?[] _padLabels      = new TextBlock?[LaneCount];
 
     // Flash state
     private readonly DateTime[] _padFlashUntil = new DateTime[LaneCount];
@@ -118,6 +125,9 @@ public partial class CueView : UserControl
         double h = canvas.Bounds.Height;
         if (w <= 0 || h <= 0) return;
 
+        _canvasW = w;
+        _hitZoneX = w * HitZoneFraction;
+
         for (int i = 0; i < LaneCount; i++)
         {
             _padCX[i]     = _padLayout[i].Xf * w;
@@ -125,26 +135,56 @@ public partial class CueView : UserControl
             _padDiamPx[i] = _padLayout[i].Df * h;
         }
 
-        double fontSize = Math.Clamp(h * 0.020, 10, 13);
+        // Evenly-spaced horizontal lane tracks in the upper portion of the canvas
+        double trackTop    = h * 0.03;
+        double trackBottom = h * 0.60;
+        _laneSpacing = (trackBottom - trackTop) / (LaneCount - 1);
+        for (int i = 0; i < LaneCount; i++)
+            _laneY[i] = trackTop + _laneSpacing * i;
 
-        // Lane guide lines — drawn behind everything
+        double fontSize = Math.Clamp(h * 0.020, 10, 13);
+        double indDiam  = Math.Clamp(_laneSpacing * 0.60, 14, 32);
+        double indCX    = 6 + indDiam / 2;
+        double lblX     = 6 + indDiam + 6;
+
+        // Left-side lane indicators
         for (int i = 0; i < LaneCount; i++)
         {
-            if (_laneLines[i] == null)
+            if (_laneIndicators[i] == null)
             {
-                var line = new Line
-                {
-                    Stroke          = new SolidColorBrush(Color.FromArgb(45, 255, 255, 255)),
-                    StrokeThickness = 1.5,
-                    ZIndex          = -1,
-                };
-                _laneLines[i] = line;
-                canvas.Children.Add(line);
+                var ind = new Ellipse { ZIndex = 1 };
+                var lbl = new TextBlock { Foreground = Brushes.White };
+                _laneIndicators[i] = ind;
+                _laneIndLabels[i]  = lbl;
+                canvas.Children.Add(ind);
+                canvas.Children.Add(lbl);
             }
-            _laneLines[i]!.StartPoint = new Point(_padCX[i], 0);
-            _laneLines[i]!.EndPoint   = new Point(_padCX[i], h);
+
+            var indicator = _laneIndicators[i]!;
+            indicator.Width  = indDiam;
+            indicator.Height = indDiam;
+            indicator.Fill   = _isFlashing[i] ? Brushes.White : _laneBrushes[i];
+            Canvas.SetLeft(indicator, indCX - indDiam / 2);
+            Canvas.SetTop(indicator,  _laneY[i] - indDiam / 2);
+
+            var label = _laneIndLabels[i]!;
+            label.Text     = _lanes[i].Label;
+            label.FontSize = fontSize;
+            Canvas.SetLeft(label, lblX);
+            Canvas.SetTop(label,  _laneY[i] - fontSize / 2 - 1);
         }
 
+        // HH open/closed state beside the HH label
+        if (_hhStateLabel == null)
+        {
+            _hhStateLabel = new TextBlock { Text = "●", Foreground = _laneBrushes[0] };
+            canvas.Children.Add(_hhStateLabel);
+        }
+        _hhStateLabel.FontSize = fontSize;
+        Canvas.SetLeft(_hhStateLabel, lblX + 28);
+        Canvas.SetTop(_hhStateLabel,  _laneY[0] - fontSize / 2 - 1);
+
+        // Kit pads at bottom (visual reference and hit-ring anchor)
         for (int i = 0; i < LaneCount; i++)
         {
             if (_pads[i] == null)
@@ -172,22 +212,14 @@ public partial class CueView : UserControl
             Canvas.SetTop(l,  _padCY[i] + _padDiamPx[i] / 2.0 + 2);
         }
 
-        if (_hhStateLabel == null)
-        {
-            _hhStateLabel = new TextBlock { Text = "●", Foreground = _laneBrushes[0], TextAlignment = TextAlignment.Center };
-            canvas.Children.Add(_hhStateLabel);
-        }
-        _hhStateLabel.FontSize = fontSize;
-        _hhStateLabel.Width    = 50;
-        Canvas.SetLeft(_hhStateLabel, _padCX[0] - 25);
-        Canvas.SetTop(_hhStateLabel,  _padCY[0] + _padDiamPx[0] / 2.0 + fontSize + 4);
-
         var now = DateTime.Now;
         foreach (var (visual, hitTime, lane) in _activeCues)
         {
             var (cx, cy) = CuePosition(hitTime, now, lane);
-            Canvas.SetLeft(visual, cx - _padDiamPx[lane] * 0.45);
-            Canvas.SetTop(visual,  cy - _padDiamPx[lane] * 0.15);
+            double cW = _laneSpacing * 0.35;
+            double cH = _laneSpacing * 0.65;
+            Canvas.SetLeft(visual, cx - cW / 2);
+            Canvas.SetTop(visual,  cy - cH / 2);
         }
     }
 
@@ -209,15 +241,15 @@ public partial class CueView : UserControl
         {
             foreach (var cue in Engine.DrainCues(lookAhead))
             {
-                double cW = _padDiamPx[cue.Lane] * 0.90;
-                double cH = _padDiamPx[cue.Lane] * 0.30;
+                double cW = _laneSpacing * 0.35;
+                double cH = _laneSpacing * 0.65;
                 var rect = new Rectangle
                 {
                     Width   = cW,
                     Height  = cH,
                     Fill    = _laneBrushes[cue.Lane],
-                    RadiusX = 4,
-                    RadiusY = 4,
+                    RadiusX = 3,
+                    RadiusY = 3,
                 };
                 var (cx, cy) = CuePosition(cue.ScheduledHitTime, now, cue.Lane);
                 Canvas.SetLeft(rect, cx - cW / 2);
@@ -226,7 +258,6 @@ public partial class CueView : UserControl
                 _activeCues.Add((rect, cue.ScheduledHitTime, cue.Lane));
             }
 
-            // Drain grid lines but don't render
             Engine.DrainGridLines(lookAhead);
         }
 
@@ -242,29 +273,30 @@ public partial class CueView : UserControl
         {
             var (visual, hitTime, lane) = _activeCues[i];
             var (cx, cy) = CuePosition(hitTime, now, lane);
-            if (cy > _padCY[lane] + _padDiamPx[lane])
+            if (cx > _hitZoneX + _laneSpacing * 0.5)
             {
                 canvas.Children.Remove(visual);
                 _activeCues.RemoveAt(i);
             }
             else
             {
-                double cW = _padDiamPx[lane] * 0.90;
-                double cH = _padDiamPx[lane] * 0.30;
+                double cW = _laneSpacing * 0.35;
+                double cH = _laneSpacing * 0.65;
                 Canvas.SetLeft(visual, cx - cW / 2);
                 Canvas.SetTop(visual,  cy - cH / 2);
             }
         }
 
-        // Pad flash
+        // Pad and indicator flash
         for (int i = 0; i < LaneCount; i++)
         {
-            if (_pads[i] == null) continue;
             bool shouldFlash = now < _padFlashUntil[i];
             if (shouldFlash != _isFlashing[i])
             {
                 _isFlashing[i] = shouldFlash;
-                _pads[i]!.Fill = shouldFlash ? Brushes.White : _laneBrushes[i];
+                IBrush fillBrush = shouldFlash ? Brushes.White : _laneBrushes[i];
+                if (_pads[i] != null)           _pads[i]!.Fill           = fillBrush;
+                if (_laneIndicators[i] != null) _laneIndicators[i]!.Fill = fillBrush;
             }
         }
 
@@ -292,8 +324,8 @@ public partial class CueView : UserControl
     {
         double remainingMs = (hitTime - now).TotalMilliseconds;
         double progress = 1.0 - remainingMs / TravelMs;
-        double x = _padCX[lane];
-        double y = -20 + progress * (_padCY[lane] + 20);
+        double x = -20 + progress * (_hitZoneX + 20);
+        double y = _laneY[lane];
         return (x, y);
     }
 
@@ -310,7 +342,6 @@ public partial class CueView : UserControl
 
                 bool onBeat = Metronome?.IsEnabled == true && Metronome.IsOnBeat(now);
 
-                // Check if any active cue for this lane is within the hit window
                 for (int j = 0; j < _activeCues.Count; j++)
                 {
                     var (_, hitTime, lane) = _activeCues[j];
