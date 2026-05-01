@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Rimshot.Views.CueView">
+    <Grid>
+        <Canvas x:Name="CueCanvas" Background="#0A0A0A" ClipToBounds="True" />
+        <ToggleButton x:Name="MetronomeToggle"
+                      Content="Metronome"
+                      HorizontalAlignment="Right" VerticalAlignment="Top"
+                      Margin="8" Padding="8,4"
+                      Focusable="False"
+                      IsCheckedChanged="OnMetronomeToggled" />
+    </Grid>
+</UserControl>

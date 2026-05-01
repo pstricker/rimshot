@@ -1,0 +1,59 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Styles.Resources>
+        <!-- Embedded fonts -->
+        <FontFamily x:Key="BebasNeue">avares://Rimshot/Assets/Fonts#Bebas Neue</FontFamily>
+        <FontFamily x:Key="RobotoMono">avares://Rimshot/Assets/Fonts#Roboto Mono</FontFamily>
+
+        <!-- Blink-182 palette -->
+        <SolidColorBrush x:Key="AppBgBrush"    Color="#0A0A0A"/>
+        <SolidColorBrush x:Key="AppBg2Brush"   Color="#141414"/>
+        <SolidColorBrush x:Key="Accent1Brush"  Color="#FFD700"/>
+        <SolidColorBrush x:Key="Accent2Brush"  Color="#FF1493"/>
+        <SolidColorBrush x:Key="Accent3Brush"  Color="#00D9FF"/>
+        <SolidColorBrush x:Key="TextMutedBrush" Color="#888888"/>
+    </Styles.Resources>
+
+    <!-- Buttons: Bebas Neue -->
+    <Style Selector="Button">
+        <Setter Property="FontFamily" Value="{StaticResource BebasNeue}"/>
+        <Setter Property="FontSize"   Value="15"/>
+        <Setter Property="Padding"    Value="10,4"/>
+    </Style>
+
+    <!-- ToggleButton: Bebas Neue -->
+    <Style Selector="ToggleButton">
+        <Setter Property="FontFamily" Value="{StaticResource BebasNeue}"/>
+        <Setter Property="FontSize"   Value="14"/>
+    </Style>
+
+    <!-- Tab headers: Bebas Neue -->
+    <Style Selector="TabItem">
+        <Setter Property="FontFamily" Value="{StaticResource BebasNeue}"/>
+        <Setter Property="FontSize"   Value="15"/>
+        <Setter Property="Foreground" Value="#888888"/>
+        <Setter Property="Padding"    Value="14,8"/>
+    </Style>
+
+    <!-- Active tab: yellow foreground -->
+    <Style Selector="TabItem:selected">
+        <Setter Property="Foreground" Value="#FFD700"/>
+    </Style>
+
+    <!-- Labels and status text: Roboto Mono -->
+    <Style Selector="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource RobotoMono}"/>
+    </Style>
+
+    <!-- BPM control and device combobox -->
+    <Style Selector="NumericUpDown">
+        <Setter Property="FontFamily" Value="{StaticResource RobotoMono}"/>
+    </Style>
+
+    <Style Selector="ComboBox">
+        <Setter Property="FontFamily" Value="{StaticResource RobotoMono}"/>
+        <Setter Property="FontSize"   Value="12"/>
+    </Style>
+
+</Styles>

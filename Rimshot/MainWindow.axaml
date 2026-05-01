@@ -1,0 +1,130 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:Rimshot.Views"
+        x:Class="Rimshot.MainWindow"
+        Title="Rimshot"
+        Width="900" Height="650"
+        MinWidth="600" MinHeight="400"
+        Background="#0A0A0A">
+
+    <DockPanel>
+
+        <!-- RIMSHOT Header Bar -->
+        <Border DockPanel.Dock="Top"
+                Background="#141414"
+                BorderBrush="#FFD700"
+                BorderThickness="0,0,0,2"
+                Padding="14,10">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Column="0"
+                           Text="RIMSHOT"
+                           FontFamily="{StaticResource BebasNeue}"
+                           FontSize="42"
+                           Foreground="#FFD700"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top"
+                Background="#141414"
+                Padding="12,8,12,8"
+                Margin="0,0,0,2">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+
+                <!-- Left: MIDI device -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <ComboBox x:Name="DeviceCombo"
+                              PlaceholderText="Select MIDI device…"
+                              MinWidth="170" />
+                    <Button x:Name="ConnectButton"
+                            Content="CONNECT"
+                            Click="OnConnectClicked"
+                            Background="Transparent"
+                            BorderBrush="#FFD700"
+                            BorderThickness="1"
+                            Foreground="White"/>
+                    <Button Content="REFRESH"
+                            Click="OnRefreshClicked"
+                            Background="Transparent"
+                            BorderBrush="#444444"
+                            BorderThickness="1"
+                            Foreground="#888888"/>
+                    <TextBlock x:Name="StatusLabel"
+                               VerticalAlignment="Center"
+                               Text="Not connected"
+                               Foreground="#888888"
+                               FontSize="12"
+                               Margin="6,0,0,0"/>
+                </StackPanel>
+
+                <!-- Center: Transport -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Button x:Name="PlayButton"
+                            Content="▶ PLAY"
+                            Click="OnPlayClicked"
+                            Background="Transparent"
+                            BorderBrush="#FFD700"
+                            BorderThickness="1"
+                            Foreground="#FFD700"
+                            Padding="14,6"/>
+                    <Button x:Name="PauseButton"
+                            Content="⏸ PAUSE"
+                            Click="OnPauseClicked"
+                            IsEnabled="False"
+                            Background="Transparent"
+                            BorderBrush="#444444"
+                            BorderThickness="1"
+                            Foreground="#888888"
+                            Padding="14,6"/>
+                    <Button x:Name="RestartButton"
+                            Content="■ STOP"
+                            Click="OnRestartClicked"
+                            Background="Transparent"
+                            BorderBrush="#444444"
+                            BorderThickness="1"
+                            Foreground="#888888"
+                            Padding="14,6"/>
+                </StackPanel>
+
+                <!-- Right: BPM -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <TextBlock Text="BPM"
+                               VerticalAlignment="Center"
+                               Foreground="#888888"/>
+                    <NumericUpDown x:Name="BpmControl"
+                                   Value="90" Minimum="40" Maximum="200" Increment="5"
+                                   Width="100"
+                                   Foreground="#FFD700"
+                                   ValueChanged="OnBpmChanged"/>
+                </StackPanel>
+
+            </Grid>
+        </Border>
+
+        <!-- Tabs -->
+        <TabControl Background="#0A0A0A">
+            <TabItem Header="CUE VIEW">
+                <views:CueView x:Name="TheCueView" />
+            </TabItem>
+            <TabItem Header="TEMPO">
+                <views:TempoView x:Name="TheTempoView" />
+            </TabItem>
+            <TabItem Header="MONITOR">
+                <DockPanel>
+                    <Button DockPanel.Dock="Top"
+                            Content="CLEAR"
+                            HorizontalAlignment="Left"
+                            Margin="0,4,0,4"
+                            Click="OnClearClicked" />
+                    <ListBox x:Name="HitLog"
+                             FontFamily="Menlo,Consolas,monospace"
+                             FontSize="13"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+                </DockPanel>
+            </TabItem>
+        </TabControl>
+
+    </DockPanel>
+</Window>

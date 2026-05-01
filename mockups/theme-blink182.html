@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=960">
+<title>Rimshot — Blink-182 Theme Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #030303;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 40px 20px;
+  font-family: 'Roboto Mono', monospace;
+}
+.window {
+  width: 900px; border-radius: 10px; overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.95);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.titlebar {
+  background: #141414; padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 2px solid #FFD700;
+}
+.app-name { font-family: 'Bebas Neue', cursive; font-size: 36px; color: #FFD700; letter-spacing: 4px; line-height: 1; }
+.theme-label { font-size: 11px; color: #555; letter-spacing: 2px; text-transform: uppercase; }
+.toolbar {
+  background: #141414; padding: 7px 16px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.btn {
+  font-family: 'Bebas Neue', cursive; font-size: 14px;
+  background: transparent; border: 1px solid #FFD700; color: #FFD700;
+  padding: 4px 14px; cursor: pointer; letter-spacing: 1px; border-radius: 3px;
+}
+.btn-dim { border-color: #444; color: #666; }
+.sep { width: 1px; height: 20px; background: #2a2a2a; margin: 0 4px; }
+.bpm-label { font-size: 12px; color: #666; }
+.bpm-val { font-family: 'Bebas Neue', cursive; font-size: 18px; color: #FFD700; }
+.metronome { margin-left: auto; font-size: 11px; color: #555; border: 1px solid #333; padding: 3px 10px; border-radius: 2px; }
+.tabs { background: #0A0A0A; display: flex; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.tab { font-size: 12px; padding: 6px 18px; color: #555; cursor: pointer; border-bottom: 2px solid transparent; letter-spacing: 1px; text-transform: uppercase; }
+.tab.active { color: #FFD700; border-bottom-color: #FFD700; }
+.canvas-wrap { background: #0A0A0A; }
+svg { display: block; }
+.palette-strip { display: flex; height: 42px; border-top: 1px solid rgba(255,255,255,0.07); }
+.swatch { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
+.font-strip { background: #141414; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.07); }
+.fh { font-family: 'Bebas Neue', cursive; font-size: 24px; color: #FFD700; letter-spacing: 4px; margin-bottom: 5px; }
+.fb { font-size: 12px; color: #888; letter-spacing: 1px; }
+.fl { font-size: 10px; color: #444; margin-top: 3px; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <span class="app-name">RIMSHOT</span>
+    <span class="theme-label">Blink-182 — Pop Art Punk</span>
+  </div>
+  <div class="toolbar">
+    <button class="btn">▶ PLAY</button>
+    <button class="btn btn-dim">⏸ PAUSE</button>
+    <button class="btn btn-dim">■ STOP</button>
+    <div class="sep"></div>
+    <span class="bpm-label">BPM</span>
+    <span class="bpm-val">90</span>
+    <span class="metronome">METRONOME ○</span>
+  </div>
+  <div class="tabs">
+    <div class="tab active">CUE VIEW</div>
+    <div class="tab">TEMPO</div>
+    <div class="tab">MONITOR</div>
+  </div>
+  <div class="canvas-wrap">
+    <svg width="900" height="480" xmlns="http://www.w3.org/2000/svg">
+      <!-- Canvas background -->
+      <rect width="900" height="480" fill="#0A0A0A"/>
+      <!-- Separator -->
+      <line x1="0" y1="290" x2="900" y2="290" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+      <!-- Beat grid (vertical lines, varying opacity) -->
+      <line x1="50"  y1="0" x2="50"  y2="290" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+      <line x1="100" y1="0" x2="100" y2="290" stroke="white" stroke-opacity="0.13" stroke-width="1"/>
+      <line x1="150" y1="0" x2="150" y2="290" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+      <line x1="200" y1="0" x2="200" y2="290" stroke="white" stroke-opacity="0.25" stroke-width="1"/>
+      <line x1="250" y1="0" x2="250" y2="290" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+      <line x1="300" y1="0" x2="300" y2="290" stroke="white" stroke-opacity="0.13" stroke-width="1"/>
+      <line x1="350" y1="0" x2="350" y2="290" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+      <line x1="400" y1="0" x2="400" y2="290" stroke="white" stroke-opacity="0.5"  stroke-width="1"/>
+      <line x1="500" y1="0" x2="500" y2="290" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+      <line x1="550" y1="0" x2="550" y2="290" stroke="white" stroke-opacity="0.13" stroke-width="1"/>
+      <line x1="600" y1="0" x2="600" y2="290" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+      <line x1="650" y1="0" x2="650" y2="290" stroke="white" stroke-opacity="0.25" stroke-width="1"/>
+      <line x1="700" y1="0" x2="700" y2="290" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+      <line x1="750" y1="0" x2="750" y2="290" stroke="white" stroke-opacity="0.13" stroke-width="1"/>
+      <line x1="800" y1="0" x2="800" y2="290" stroke="white" stroke-opacity="0.06" stroke-width="1"/>
+      <line x1="850" y1="0" x2="850" y2="290" stroke="white" stroke-opacity="0.5"  stroke-width="1"/>
+
+      <!-- Lane tracks -->
+      <line x1="40" y1="14"  x2="900" y2="14"  stroke="#FFD700" stroke-opacity="0.25" stroke-width="1"/>
+      <line x1="40" y1="54"  x2="900" y2="54"  stroke="#FFD700" stroke-opacity="0.25" stroke-width="1"/>
+      <line x1="40" y1="93"  x2="900" y2="93"  stroke="#FF1493" stroke-opacity="0.25" stroke-width="1"/>
+      <line x1="40" y1="132" x2="900" y2="132" stroke="#00D9FF" stroke-opacity="0.25" stroke-width="1"/>
+      <line x1="40" y1="171" x2="900" y2="171" stroke="#00D9FF" stroke-opacity="0.25" stroke-width="1"/>
+      <line x1="40" y1="210" x2="900" y2="210" stroke="#FF1493" stroke-opacity="0.25" stroke-width="1"/>
+      <line x1="40" y1="249" x2="900" y2="249" stroke="#00D9FF" stroke-opacity="0.25" stroke-width="1"/>
+      <line x1="40" y1="283" x2="900" y2="283" stroke="#FFD700" stroke-opacity="0.25" stroke-width="1"/>
+
+      <!-- Hit zone line -->
+      <line x1="450" y1="0" x2="450" y2="290" stroke="white" stroke-width="2"/>
+      <text x="455" y="280" font-family="'Bebas Neue', cursive" font-size="10" fill="rgba(255,255,255,0.35)" dominant-baseline="auto">HIT ZONE</text>
+
+      <!-- Mock notes approaching hit zone -->
+      <rect x="310" y="10"  width="40" height="8" rx="3" fill="#FFD700"/>
+      <rect x="210" y="10"  width="40" height="8" rx="3" fill="#FFD700" fill-opacity="0.7"/>
+      <rect x="110" y="10"  width="40" height="8" rx="3" fill="#FFD700" fill-opacity="0.45"/>
+      <rect x="270" y="50"  width="40" height="8" rx="3" fill="#FFD700"/>
+      <rect x="360" y="89"  width="40" height="8" rx="3" fill="#FF1493"/>
+      <rect x="160" y="89"  width="40" height="8" rx="3" fill="#FF1493" fill-opacity="0.6"/>
+      <rect x="280" y="128" width="40" height="8" rx="3" fill="#00D9FF"/>
+      <rect x="350" y="167" width="40" height="8" rx="3" fill="#00D9FF"/>
+      <rect x="180" y="167" width="40" height="8" rx="3" fill="#00D9FF" fill-opacity="0.55"/>
+      <rect x="310" y="206" width="40" height="8" rx="3" fill="#FF1493"/>
+      <rect x="110" y="206" width="40" height="8" rx="3" fill="#FF1493" fill-opacity="0.45"/>
+      <rect x="260" y="245" width="40" height="8" rx="3" fill="#00D9FF"/>
+      <rect x="320" y="279" width="40" height="8" rx="3" fill="#FFD700"/>
+      <rect x="220" y="279" width="40" height="8" rx="3" fill="#FFD700" fill-opacity="0.65"/>
+
+      <!-- Lane indicators (left side) -->
+      <!-- HH (cymbal) -->
+      <circle cx="20" cy="14"  r="13" fill="#FFD700"/>
+      <circle cx="20" cy="14"  r="8.5" fill="none" stroke="#0A0A0A" stroke-width="2.5"/>
+      <text x="20" y="14" font-family="'Bebas Neue', cursive" font-size="8" fill="white" text-anchor="middle" dominant-baseline="central">HH</text>
+      <!-- CR (cymbal) -->
+      <circle cx="20" cy="54"  r="13" fill="#FFD700"/>
+      <circle cx="20" cy="54"  r="8.5" fill="none" stroke="#0A0A0A" stroke-width="2.5"/>
+      <text x="20" y="54" font-family="'Bebas Neue', cursive" font-size="8" fill="white" text-anchor="middle" dominant-baseline="central">CR</text>
+      <!-- SN (drum) -->
+      <circle cx="20" cy="93"  r="13" fill="#FF1493" stroke="white" stroke-width="2.5"/>
+      <text x="20" y="93" font-family="'Bebas Neue', cursive" font-size="8" fill="white" text-anchor="middle" dominant-baseline="central">SN</text>
+      <!-- TM1 (drum) -->
+      <circle cx="20" cy="132" r="13" fill="#00D9FF" stroke="white" stroke-width="2.5"/>
+      <text x="20" y="132" font-family="'Bebas Neue', cursive" font-size="7" fill="white" text-anchor="middle" dominant-baseline="central">TM1</text>
+      <!-- TM2 (drum) -->
+      <circle cx="20" cy="171" r="13" fill="#00D9FF" stroke="white" stroke-width="2.5"/>
+      <text x="20" y="171" font-family="'Bebas Neue', cursive" font-size="7" fill="white" text-anchor="middle" dominant-baseline="central">TM2</text>
+      <!-- BD (drum) -->
+      <circle cx="20" cy="210" r="13" fill="#FF1493" stroke="white" stroke-width="2.5"/>
+      <text x="20" y="210" font-family="'Bebas Neue', cursive" font-size="8" fill="white" text-anchor="middle" dominant-baseline="central">BD</text>
+      <!-- FTM (drum) -->
+      <circle cx="20" cy="249" r="13" fill="#00D9FF" stroke="white" stroke-width="2.5"/>
+      <text x="20" y="249" font-family="'Bebas Neue', cursive" font-size="7" fill="white" text-anchor="middle" dominant-baseline="central">FTM</text>
+      <!-- RD (cymbal) -->
+      <circle cx="20" cy="283" r="13" fill="#FFD700"/>
+      <circle cx="20" cy="283" r="8.5" fill="none" stroke="#0A0A0A" stroke-width="2.5"/>
+      <text x="20" y="283" font-family="'Bebas Neue', cursive" font-size="8" fill="white" text-anchor="middle" dominant-baseline="central">RD</text>
+
+      <!-- Kit pads (bottom area) -->
+      <!-- HH (cymbal) cx=189,cy=374,r=31 -->
+      <circle cx="189" cy="374" r="31" fill="#FFD700"/>
+      <circle cx="189" cy="374" r="21" fill="none" stroke="#0A0A0A" stroke-width="3"/>
+      <text x="189" y="374" font-family="'Bebas Neue', cursive" font-size="20" fill="white" text-anchor="middle" dominant-baseline="central">HH</text>
+      <!-- CR (cymbal) cx=297,cy=326,r=30 -->
+      <circle cx="297" cy="326" r="30" fill="#FFD700"/>
+      <circle cx="297" cy="326" r="20" fill="none" stroke="#0A0A0A" stroke-width="3"/>
+      <text x="297" y="326" font-family="'Bebas Neue', cursive" font-size="19" fill="white" text-anchor="middle" dominant-baseline="central">CR</text>
+      <!-- SN (drum) cx=279,cy=413,r=31 -->
+      <circle cx="279" cy="413" r="31" fill="#FF1493" stroke="white" stroke-width="3.5"/>
+      <text x="279" y="413" font-family="'Bebas Neue', cursive" font-size="20" fill="white" text-anchor="middle" dominant-baseline="central">SN</text>
+      <!-- TM1 (drum) cx=396,cy=355,r=26 -->
+      <circle cx="396" cy="355" r="26" fill="#00D9FF" stroke="white" stroke-width="3"/>
+      <text x="396" y="355" font-family="'Bebas Neue', cursive" font-size="15" fill="white" text-anchor="middle" dominant-baseline="central">TM1</text>
+      <!-- TM2 (drum) cx=504,cy=355,r=26 -->
+      <circle cx="504" cy="355" r="26" fill="#00D9FF" stroke="white" stroke-width="3"/>
+      <text x="504" y="355" font-family="'Bebas Neue', cursive" font-size="15" fill="white" text-anchor="middle" dominant-baseline="central">TM2</text>
+      <!-- BD (drum) cx=450,cy=422,r=29 -->
+      <circle cx="450" cy="422" r="29" fill="#FF1493" stroke="white" stroke-width="3.5"/>
+      <text x="450" y="422" font-family="'Bebas Neue', cursive" font-size="18" fill="white" text-anchor="middle" dominant-baseline="central">BD</text>
+      <!-- FTM (drum) cx=621,cy=413,r=31 -->
+      <circle cx="621" cy="413" r="31" fill="#00D9FF" stroke="white" stroke-width="3.5"/>
+      <text x="621" y="413" font-family="'Bebas Neue', cursive" font-size="20" fill="white" text-anchor="middle" dominant-baseline="central">FTM</text>
+      <!-- RD (cymbal) cx=603,cy=326,r=30 -->
+      <circle cx="603" cy="326" r="30" fill="#FFD700"/>
+      <circle cx="603" cy="326" r="20" fill="none" stroke="#0A0A0A" stroke-width="3"/>
+      <text x="603" y="326" font-family="'Bebas Neue', cursive" font-size="19" fill="white" text-anchor="middle" dominant-baseline="central">RD</text>
+
+      <!-- Hit ring on BD (expanding after hit) -->
+      <circle cx="450" cy="422" r="44" fill="none" stroke="white" stroke-width="1.5" opacity="0.4"/>
+    </svg>
+  </div>
+
+  <div class="palette-strip">
+    <div class="swatch" style="background:#0A0A0A; color:#555; border-right:1px solid #1a1a1a;">BG  #0A0A0A</div>
+    <div class="swatch" style="background:#FFD700; color:rgba(0,0,0,0.75);">● #FFD700</div>
+    <div class="swatch" style="background:#FF1493; color:rgba(0,0,0,0.75);">● #FF1493</div>
+    <div class="swatch" style="background:#00D9FF; color:rgba(0,0,0,0.75);">● #00D9FF</div>
+  </div>
+
+  <div class="font-strip">
+    <div class="fh">RIMSHOT  •  KICK IT  •  PARADIDDLE</div>
+    <div class="fb">HH  CR  SN  TM1  TM2  BD  FTM  RD  •  Tempo: 90 BPM  •  Hit Window: 150ms</div>
+    <div class="fl">Heading: Bebas Neue  &nbsp;|&nbsp;  Body: Roboto Mono</div>
+  </div>
+</div>
+</body>
+</html>

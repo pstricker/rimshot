@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Rimshot.Views.TempoView">
+    <StackPanel Margin="20" Spacing="16" MaxWidth="320">
+
+        <TextBlock Text="Tempo Settings" FontSize="18" FontWeight="Bold" />
+
+        <!-- BPM -->
+        <StackPanel Spacing="6">
+            <TextBlock Text="BPM" Foreground="Gray" FontSize="12" />
+            <NumericUpDown x:Name="BpmControl"
+                           Value="90" Minimum="40" Maximum="200" Increment="5"
+                           MinWidth="120"
+                           ValueChanged="OnBpmChanged" />
+        </StackPanel>
+
+        <!-- Subdivision -->
+        <StackPanel Spacing="6">
+            <TextBlock Text="Metronome Subdivision" Foreground="Gray" FontSize="12" />
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <RadioButton x:Name="SubWhole"   Content="1/1" GroupName="Subdivision" IsCheckedChanged="OnSubdivisionChanged" />
+                <RadioButton x:Name="SubHalf"    Content="1/2" GroupName="Subdivision" IsCheckedChanged="OnSubdivisionChanged" />
+                <RadioButton x:Name="SubQuarter" Content="1/4" GroupName="Subdivision" IsChecked="True" IsCheckedChanged="OnSubdivisionChanged" />
+                <RadioButton x:Name="SubEighth"  Content="1/8" GroupName="Subdivision" IsCheckedChanged="OnSubdivisionChanged" />
+            </StackPanel>
+        </StackPanel>
+
+    </StackPanel>
+</UserControl>
