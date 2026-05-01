@@ -8,6 +8,10 @@
 
 ---
 
+![Rimshot screenshot](rimshot.png)
+
+---
+
 ## What Is This?
 
 Rimshot is a drum trainer for your real electronic drum kit. Note cues scroll across the screen — your job is to hit the right drum at the right time. Connect your MIDI kit, crank the BPM, and get tight.
