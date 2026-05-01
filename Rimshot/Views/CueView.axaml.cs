@@ -97,6 +97,7 @@ public partial class CueView : UserControl
     public MetronomeService? Metronome { get; set; }
     public bool AutoPlay { get; set; }
     public AudioService? Audio { get; set; }
+    public MusicService? Music { get; set; }
 
     public void SetHiHatOpen(bool isOpen)
     {
@@ -440,6 +441,13 @@ public partial class CueView : UserControl
                 });
             }
             Engine.DrainGridLines(lookAhead);
+
+            if (Music != null)
+            {
+                foreach (var melodic in Engine.DrainMelodicEvents(lookAhead))
+                    Music.Schedule(melodic.ScheduledAt, melodic.Channel,
+                        melodic.Command, melodic.Data1, melodic.Data2);
+            }
         }
 
         // Metronome audio

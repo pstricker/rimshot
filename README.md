@@ -39,6 +39,11 @@ Or pick **Load from file…** to drop in any `.mid` file. The lane strip auto-sh
 ### 🤖 Auto Play
 Flip the **AUTO PLAY** checkbox and Rimshot plays the song for you — perfect cues, perfect timing, perfect ego death. Great for hearing what a pattern *should* sound like before you embarrass yourself trying it.
 
+### 🎹 Backing Track
+Loaded a `.mid` file with melody, bass, or anything else that isn't drums? Check the **BACKING TRACK** box and Rimshot synthesizes the rest of the music alongside your drum cues — so you can play *along* with the song instead of in silence. Velocities, program changes, volume, pan, sustain pedal, and pitch bend are all preserved.
+
+The checkbox only appears when (a) a loaded MIDI actually contains non-drum channels and (b) you've dropped a General MIDI SoundFont (`.sf2`) into `Rimshot/Sounds/soundfonts/`. **FluidR3 GM** (MIT-licensed) is recommended — see `Rimshot/Sounds/soundfonts/README.md` for download mirrors. No soundfont, no problem: drum practice still works as normal.
+
 ### 🥁 8-Lane Drum Kit
 
 | Lane | Piece | MIDI Notes | Color |
@@ -174,6 +179,7 @@ Rimshot.sln
 │   │   ├── DrumSynth.cs              — procedural audio fallback
 │   │   ├── MetronomeService.cs       — beat tracking and subdivision
 │   │   ├── MidiService.cs            — MIDI device I/O (DryWetMidi)
+│   │   ├── MusicService.cs           — backing-track synthesizer (MeltySynth)
 │   │   ├── SongLibrary.cs            — built-in pattern catalog
 │   │   └── WavLoader.cs              — 16/24-bit PCM WAV parser
 │   ├── Views/
@@ -181,12 +187,14 @@ Rimshot.sln
 │   │   └── TempoView                 — BPM + metronome subdivision UI
 │   ├── MainWindow                    — toolbar, song picker, tabs, transport
 │   └── Sounds/                       — WAV samples (hh, sn, bd, cr, rd, toms...)
+│       └── soundfonts/               — drop a .sf2 here to enable BACKING TRACK
 │
 ├── Rimshot.Core/                     — shared library (used by both apps)
 │   ├── Models/
 │   │   ├── DrumLane.cs               — lane definitions, MIDI notes, colors
 │   │   ├── DrumHit.cs                — hit event record
 │   │   ├── FallingCue.cs             — scheduled note cue
+│   │   ├── MelodicTrack.cs           — non-drum notes + program/CC/pitch-bend events
 │   │   ├── PatternNote.cs            — note within a song
 │   │   └── Song.cs                   — song record (notes + length + loop flag)
 │   ├── Services/
@@ -213,6 +221,7 @@ Rimshot.sln
 | UI Framework | Avalonia 12 |
 | MIDI | Melanchall.DryWetMidi |
 | Audio | Silk.NET.OpenAL |
+| SoundFont synth | MeltySynth |
 | Fonts | Bebas Neue, Roboto Mono |
 
 ---

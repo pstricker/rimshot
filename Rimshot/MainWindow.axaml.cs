@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     private readonly CueEngine _cueEngine = new();
     private readonly AudioService _audio = new();
     private readonly MetronomeService _metronome = new();
+    private readonly MusicService _music;
     private readonly ObservableCollection<string> _hits = [];
     private readonly ObservableCollection<Song> _songItems = new(SongLibrary.AllItems);
     private bool _connected;
@@ -31,6 +32,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        _music = new MusicService(_audio);
 
         AddHandler(KeyDownEvent, OnKeyDownTunnel, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         AddHandler(KeyUpEvent, OnKeyUpTunnel, Avalonia.Interactivity.RoutingStrategies.Tunnel);
@@ -59,6 +62,7 @@ public partial class MainWindow : Window
         TheCueView.Engine = _cueEngine;
         TheCueView.Metronome = _metronome;
         TheCueView.Audio = _audio;
+        TheCueView.Music = _music;
 
         TheTempoView.BpmChanged += bpm =>
         {
@@ -119,6 +123,7 @@ public partial class MainWindow : Window
     {
         _cueEngine.Pause();
         _metronome.Pause();
+        _music.Reset();
         UpdateTransportButtons();
     }
 
@@ -127,6 +132,7 @@ public partial class MainWindow : Window
         TheCueView.ClearCues();
         _cueEngine.Restart();
         _metronome.Start();
+        _music.Reset();
         UpdateTransportButtons();
     }
 
@@ -158,6 +164,7 @@ public partial class MainWindow : Window
         _cueEngine.LoadSong(selected);
         TheCueView.SetActiveLanes(GetActiveLanes(selected));
         SongStatusLabel.Text = $"{selected.Notes.Length} notes";
+        UpdateBackingTrackVisibility(selected);
     }
 
     private async Task LoadFromFileAsync()
@@ -190,6 +197,7 @@ public partial class MainWindow : Window
             _cueEngine.LoadSong(song);
             TheCueView.SetActiveLanes(GetActiveLanes(song));
             SongStatusLabel.Text = $"{song.Notes.Length} notes, {song.TotalEighths / 8.0:F0} bars";
+            UpdateBackingTrackVisibility(song);
         }
         catch (Exception ex)
         {
@@ -205,6 +213,20 @@ public partial class MainWindow : Window
     {
         _autoPlay = AutoPlayCheck.IsChecked == true;
         TheCueView.AutoPlay = _autoPlay;
+    }
+
+    private void OnBackingTrackChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _music.SetEnabled(BackingTrackCheck.IsChecked == true);
+    }
+
+    private void UpdateBackingTrackVisibility(Song song)
+    {
+        bool visible = song.HasBackingTrack && _music.IsAvailable;
+        BackingTrackCheck.IsVisible = visible;
+        BackingTrackCheck.IsChecked = false;
+        _music.SetEnabled(false);
+        _music.Reset();
     }
 
     private void OnDrumHit(object? sender, DrumHit hit)
@@ -282,6 +304,7 @@ public partial class MainWindow : Window
         _cueEngine.Stop();
         _metronome.Stop();
         _midi.Dispose();
+        _music.Dispose();   // must run before _audio: streaming source lives on AudioService's context
         _audio.Dispose();
         base.OnClosing(e);
     }

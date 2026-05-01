@@ -124,6 +124,14 @@
                           FontSize="12"
                           Margin="12,0,0,0"
                           IsCheckedChanged="OnAutoPlayChanged"/>
+                <CheckBox x:Name="BackingTrackCheck"
+                          Content="BACKING TRACK"
+                          IsVisible="False"
+                          VerticalAlignment="Center"
+                          Foreground="#FFD700"
+                          FontSize="12"
+                          Margin="12,0,0,0"
+                          IsCheckedChanged="OnBackingTrackChanged"/>
                 <TextBlock x:Name="SongStatusLabel"
                            VerticalAlignment="Center"
                            Foreground="#888888"

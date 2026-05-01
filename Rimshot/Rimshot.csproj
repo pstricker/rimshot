@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <Content Include="Sounds\*.wav" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Sounds\soundfonts\*.sf2" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +27,7 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Melanchall.DryWetMidi" Version="8.0.3" />
+    <PackageReference Include="MeltySynth" Version="2.4.1" />
     <PackageReference Include="Silk.NET.OpenAL" Version="2.23.0" />
     <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1" />
   </ItemGroup>
