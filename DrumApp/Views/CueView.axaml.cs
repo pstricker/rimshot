@@ -22,21 +22,22 @@ public partial class CueView : UserControl
     private readonly SolidColorBrush[] _laneBrushes;
     private DispatcherTimer? _timer;
 
-    // Kit layout — positions derived from top-down drum kit image, kit in bottom 38% of canvas
+    // Kit layout — compressed toward bottom-center, matching top-down drum kit view
     // (Xf = fraction of canvas width, Yf = fraction of canvas height, Df = fraction of canvas height)
     private static readonly (double Xf, double Yf, double Df)[] _padLayout =
     [
-        (0.22, 0.83, 0.080), // HH  — left, lower
-        (0.28, 0.64, 0.080), // CR  — upper-left
-        (0.40, 0.88, 0.085), // SN  — front-left, low
-        (0.46, 0.69, 0.075), // TM-hi — upper-center
-        (0.50, 0.82, 0.115), // BD  — center, large
-        (0.60, 0.91, 0.085), // TM-floor — front-right, low
-        (0.72, 0.64, 0.085), // RD  — upper-right
+        (0.30, 0.87, 0.110), // HH  — left, lower
+        (0.35, 0.74, 0.110), // CR  — upper-left
+        (0.42, 0.91, 0.110), // SN  — front-left, low
+        (0.46, 0.77, 0.100), // TM-hi — upper-center
+        (0.50, 0.86, 0.150), // BD  — center, large
+        (0.59, 0.93, 0.110), // TM-floor — front-right, low
+        (0.66, 0.74, 0.110), // RD  — upper-right
     ];
     private readonly double[] _padCX     = new double[LaneCount];
     private readonly double[] _padCY     = new double[LaneCount];
     private readonly double[] _padDiamPx = new double[LaneCount];
+    private double _canvasW;
 
     // Fixed canvas elements
     private readonly Ellipse?[] _pads = new Ellipse?[LaneCount];
@@ -116,6 +117,7 @@ public partial class CueView : UserControl
         double h = canvas.Bounds.Height;
         if (w <= 0 || h <= 0) return;
 
+        _canvasW = w;
         for (int i = 0; i < LaneCount; i++)
         {
             _padCX[i]     = _padLayout[i].Xf * w;
@@ -271,9 +273,14 @@ public partial class CueView : UserControl
     private (double X, double Y) CuePosition(DateTime hitTime, DateTime now, int lane)
     {
         double remainingMs = (hitTime - now).TotalMilliseconds;
-        double progress = 1.0 - remainingMs / TravelMs; // 0 = top of canvas, 1 = at pad
-        double y = -20 + progress * (_padCY[lane] + 20);
-        return (_padCX[lane], y);
+        double progress = 1.0 - remainingMs / TravelMs; // 0 = origin at top, 1 = at pad
+        // Spread origins across full canvas width, amplified outward from center
+        const double SpreadFactor = 3.0;
+        double originX = Math.Clamp(_canvasW / 2 + (_padCX[lane] - _canvasW / 2) * SpreadFactor,
+                                    _canvasW * 0.03, _canvasW * 0.97);
+        double x = originX + progress * (_padCX[lane] - originX);
+        double y = -20    + progress * (_padCY[lane] + 20);
+        return (x, y);
     }
 
     private void OnDrumHit(object? sender, DrumHit hit)
