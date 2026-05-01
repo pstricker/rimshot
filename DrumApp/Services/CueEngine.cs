@@ -40,7 +40,8 @@ public class CueEngine
         }
     }
 
-    public CueEngineState State { get; private set; } = CueEngineState.Stopped;
+    public CueEngineState State       { get; private set; } = CueEngineState.Stopped;
+    public DateTime       SongStartTime { get; private set; } = DateTime.MinValue;
 
     private double EighthNoteMs => 60000.0 / (_bpm * 2.0);
 
@@ -57,8 +58,9 @@ public class CueEngine
         {
             case CueEngineState.Paused:
                 var pauseDuration = DateTime.Now - _pausedAt;
-                _nextBarTime += pauseDuration;
+                _nextBarTime      += pauseDuration;
                 _nextGridLineTime += pauseDuration;
+                SongStartTime     += pauseDuration;
                 State = CueEngineState.Running;
                 break;
             case CueEngineState.Stopped:
@@ -77,8 +79,9 @@ public class CueEngine
     public void Restart()
     {
         var now = DateTime.Now;
-        _nextBarTime = now;
+        _nextBarTime      = now;
         _nextGridLineTime = now;
+        SongStartTime     = now;
         _barIndex = 0;
         _pendingCues.Clear();
         _pendingGridLines.Clear();

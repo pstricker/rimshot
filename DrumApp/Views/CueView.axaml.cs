@@ -22,24 +22,24 @@ public partial class CueView : UserControl
     private readonly SolidColorBrush[] _laneBrushes;
     private DispatcherTimer? _timer;
 
-    // Kit layout — bottom-center 2D reference display
+    // Kit layout — bottom 2D reference (symmetric around BD at X=0.50)
     // (Xf = fraction of canvas width, Yf = fraction of canvas height, Df = fraction of canvas height)
     private static readonly (double Xf, double Yf, double Df)[] _padLayout =
     [
         (0.21, 0.78, 0.130), // HH  — far left
-        (0.33, 0.68, 0.125), // CR  — upper left
-        (0.31, 0.86, 0.130), // SN  — lower left
+        (0.33, 0.68, 0.125), // CR  — upper left  (BD-0.17)
+        (0.31, 0.86, 0.130), // SN  — lower left  (BD-0.19)
         (0.44, 0.74, 0.110), // TM1 — upper center-left
         (0.56, 0.74, 0.110), // TM2 — upper center-right
         (0.50, 0.88, 0.120), // BD  — center
-        (0.62, 0.86, 0.130), // FTM — lower right
-        (0.60, 0.68, 0.125), // RD  — upper right
+        (0.69, 0.86, 0.130), // FTM — lower right (BD+0.19, mirrors SN)
+        (0.67, 0.68, 0.125), // RD  — upper right (BD+0.17, mirrors CR)
     ];
     private readonly double[] _padCX     = new double[LaneCount];
     private readonly double[] _padCY     = new double[LaneCount];
     private readonly double[] _padDiamPx = new double[LaneCount];
 
-    // Horizontal lane track positions (computed in RebuildLayout)
+    // Horizontal lane track positions
     private double   _canvasW;
     private double   _laneSpacing;
     private double   _hitZoneX;
@@ -51,13 +51,18 @@ public partial class CueView : UserControl
     private readonly Ellipse?[]   _pads           = new Ellipse?[LaneCount];
     private readonly TextBlock?[] _padLabels      = new TextBlock?[LaneCount];
 
+    // Beat grid: hit-zone line + scrolling subdivision lines
+    private Line? _hitZoneLine;
+    private const int GridLinePoolSize = 60;
+    private readonly Line[] _gridLinePool = new Line[GridLinePoolSize];
+    private bool _gridPoolReady;
+
     // Flash state
     private readonly DateTime[] _padFlashUntil = new DateTime[LaneCount];
     private readonly bool[] _isFlashing = new bool[LaneCount];
 
-    // Active scrolling elements — Lane stored for hit accuracy check
+    // Active scrolling note cues
     private readonly List<(Rectangle Visual, DateTime HitTime, int Lane)> _activeCues = [];
-    private readonly List<(Rectangle Visual, DateTime HitTime)> _activeGridLines = [];
 
     // On-target hit rings
     private readonly List<(Ellipse Visual, DateTime StartTime, int Lane)> _hitRings = [];
@@ -93,12 +98,8 @@ public partial class CueView : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-
-        if (Midi != null)
-            Midi.DrumHitReceived += OnDrumHit;
-
+        if (Midi != null) Midi.DrumHitReceived += OnDrumHit;
         SizeChanged += OnSizeChanged;
-
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
         _timer.Tick += OnTick;
         _timer.Start();
@@ -107,13 +108,10 @@ public partial class CueView : UserControl
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnDetachedFromVisualTree(e);
-
         _timer?.Stop();
         _timer = null;
         SizeChanged -= OnSizeChanged;
-
-        if (Midi != null)
-            Midi.DrumHitReceived -= OnDrumHit;
+        if (Midi != null) Midi.DrumHitReceived -= OnDrumHit;
     }
 
     private void OnSizeChanged(object? sender, SizeChangedEventArgs e) => RebuildLayout();
@@ -125,7 +123,7 @@ public partial class CueView : UserControl
         double h = canvas.Bounds.Height;
         if (w <= 0 || h <= 0) return;
 
-        _canvasW = w;
+        _canvasW  = w;
         _hitZoneX = w * HitZoneFraction;
 
         for (int i = 0; i < LaneCount; i++)
@@ -135,12 +133,54 @@ public partial class CueView : UserControl
             _padDiamPx[i] = _padLayout[i].Df * h;
         }
 
-        // Evenly-spaced horizontal lane tracks in the upper portion of the canvas
+        // Evenly-spaced horizontal tracks in the upper portion
         double trackTop    = h * 0.03;
         double trackBottom = h * 0.60;
         _laneSpacing = (trackBottom - trackTop) / (LaneCount - 1);
         for (int i = 0; i < LaneCount; i++)
             _laneY[i] = trackTop + _laneSpacing * i;
+
+        double lineTop    = _laneY[0]            - _laneSpacing / 2;
+        double lineBottom = _laneY[LaneCount - 1] + _laneSpacing / 2;
+
+        // Hit-zone vertical line
+        if (_hitZoneLine == null)
+        {
+            _hitZoneLine = new Line
+            {
+                Stroke          = new SolidColorBrush(Colors.White),
+                StrokeThickness = 2,
+                ZIndex          = -1,
+                Opacity         = 0.70,
+            };
+            canvas.Children.Add(_hitZoneLine);
+        }
+        _hitZoneLine.StartPoint = new Point(_hitZoneX, lineTop);
+        _hitZoneLine.EndPoint   = new Point(_hitZoneX, lineBottom);
+
+        // Subdivision grid line pool
+        if (!_gridPoolReady)
+        {
+            for (int k = 0; k < GridLinePoolSize; k++)
+            {
+                var gl = new Line
+                {
+                    Stroke          = new SolidColorBrush(Colors.White),
+                    StrokeThickness = 1,
+                    ZIndex          = -2,
+                    Opacity         = 0,
+                };
+                _gridLinePool[k] = gl;
+                canvas.Children.Add(gl);
+            }
+            _gridPoolReady = true;
+        }
+        // Update heights for all pool lines
+        for (int k = 0; k < GridLinePoolSize; k++)
+        {
+            _gridLinePool[k].StartPoint = new Point(_gridLinePool[k].StartPoint.X, lineTop);
+            _gridLinePool[k].EndPoint   = new Point(_gridLinePool[k].EndPoint.X,   lineBottom);
+        }
 
         double fontSize = Math.Clamp(h * 0.020, 10, 13);
         double indDiam  = Math.Clamp(_laneSpacing * 0.60, 14, 32);
@@ -174,7 +214,7 @@ public partial class CueView : UserControl
             Canvas.SetTop(label,  _laneY[i] - fontSize / 2 - 1);
         }
 
-        // HH open/closed state beside the HH label
+        // HH open/closed state
         if (_hhStateLabel == null)
         {
             _hhStateLabel = new TextBlock { Text = "●", Foreground = _laneBrushes[0] };
@@ -184,14 +224,14 @@ public partial class CueView : UserControl
         Canvas.SetLeft(_hhStateLabel, lblX + 28);
         Canvas.SetTop(_hhStateLabel,  _laneY[0] - fontSize / 2 - 1);
 
-        // Kit pads at bottom (visual reference and hit-ring anchor)
+        // Kit pads at bottom (visual reference + hit-ring anchor)
         for (int i = 0; i < LaneCount; i++)
         {
             if (_pads[i] == null)
             {
                 var pad = new Ellipse();
                 var lbl = new TextBlock { Foreground = Brushes.White, TextAlignment = TextAlignment.Center };
-                _pads[i] = pad;
+                _pads[i]      = pad;
                 _padLabels[i] = lbl;
                 canvas.Children.Add(pad);
                 canvas.Children.Add(lbl);
@@ -234,7 +274,7 @@ public partial class CueView : UserControl
 
         if (w <= 0 || h <= 0) return;
 
-        var now = DateTime.Now;
+        var now       = DateTime.Now;
         var lookAhead = now + TimeSpan.FromMilliseconds(TravelMs);
 
         if (Engine != null)
@@ -257,7 +297,6 @@ public partial class CueView : UserControl
                 canvas.Children.Add(rect);
                 _activeCues.Add((rect, cue.ScheduledHitTime, cue.Lane));
             }
-
             Engine.DrainGridLines(lookAhead);
         }
 
@@ -268,7 +307,7 @@ public partial class CueView : UserControl
                 Audio.PlayMetronomeClick();
         }
 
-        // Update and expire cues
+        // Update and expire note cues
         for (int i = _activeCues.Count - 1; i >= 0; i--)
         {
             var (visual, hitTime, lane) = _activeCues[i];
@@ -294,9 +333,9 @@ public partial class CueView : UserControl
             if (shouldFlash != _isFlashing[i])
             {
                 _isFlashing[i] = shouldFlash;
-                IBrush fillBrush = shouldFlash ? Brushes.White : _laneBrushes[i];
-                if (_pads[i] != null)           _pads[i]!.Fill           = fillBrush;
-                if (_laneIndicators[i] != null) _laneIndicators[i]!.Fill = fillBrush;
+                IBrush fill = shouldFlash ? Brushes.White : _laneBrushes[i];
+                if (_pads[i]           != null) _pads[i]!.Fill           = fill;
+                if (_laneIndicators[i] != null) _laneIndicators[i]!.Fill = fill;
             }
         }
 
@@ -318,12 +357,60 @@ public partial class CueView : UserControl
             Canvas.SetLeft(ring, _padCX[lane] - size / 2.0);
             Canvas.SetTop(ring,  _padCY[lane] - size / 2.0);
         }
+
+        // Scrolling beat-subdivision grid lines
+        UpdateGridLines(now);
+    }
+
+    private void UpdateGridLines(DateTime now)
+    {
+        if (!_gridPoolReady || _laneSpacing <= 0) return;
+
+        int poolIdx = 0;
+
+        if (Engine?.State == CueEngineState.Running && Engine.SongStartTime != DateTime.MinValue)
+        {
+            double eighthMs  = 30000.0 / Engine.Bpm;
+            double elapsed   = (now - Engine.SongStartTime).TotalMilliseconds;
+            double lineTop   = _laneY[0]            - _laneSpacing / 2;
+            double lineBot   = _laneY[LaneCount - 1] + _laneSpacing / 2;
+
+            // Range: lines that could be on-screen
+            int firstBeat = Math.Max(0, (int)((elapsed - TravelMs * 0.25) / eighthMs));
+            int lastBeat  = (int)((elapsed + TravelMs)  / eighthMs) + 1;
+
+            for (int beat = firstBeat; beat <= lastBeat && poolIdx < GridLinePoolSize; beat++)
+            {
+                double opacity = (beat % 8 == 0) ? 0.0    // 1/1 — invisible
+                               : (beat % 4 == 0) ? 0.5    // 1/2
+                               : (beat % 2 == 0) ? 0.25   // 1/4
+                               :                   0.125;  // 1/8
+
+                if (opacity == 0) continue;
+
+                DateTime beatTime    = Engine.SongStartTime.AddMilliseconds(beat * eighthMs);
+                double   remaining   = (beatTime - now).TotalMilliseconds;
+                double   progress    = 1.0 - remaining / TravelMs;
+                double   x           = -20 + progress * (_hitZoneX + 20);
+
+                if (x < -2 || x > _canvasW + 2) continue;
+
+                var line = _gridLinePool[poolIdx++];
+                line.StartPoint = new Point(x, lineTop);
+                line.EndPoint   = new Point(x, lineBot);
+                line.Opacity    = opacity;
+            }
+        }
+
+        // Hide unused pool lines
+        for (int k = poolIdx; k < GridLinePoolSize; k++)
+            _gridLinePool[k].Opacity = 0;
     }
 
     private (double X, double Y) CuePosition(DateTime hitTime, DateTime now, int lane)
     {
         double remainingMs = (hitTime - now).TotalMilliseconds;
-        double progress = 1.0 - remainingMs / TravelMs;
+        double progress    = 1.0 - remainingMs / TravelMs;
         double x = -20 + progress * (_hitZoneX + 20);
         double y = _laneY[lane];
         return (x, y);
