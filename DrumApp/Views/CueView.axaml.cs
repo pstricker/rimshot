@@ -26,22 +26,22 @@ public partial class CueView : UserControl
     // (Xf = fraction of canvas width, Yf = fraction of canvas height, Df = fraction of canvas height)
     private static readonly (double Xf, double Yf, double Df)[] _padLayout =
     [
-        (0.13, 0.77, 0.120), // HH  — far left, mid height
-        (0.29, 0.67, 0.115), // CR  — upper left
-        (0.27, 0.85, 0.125), // SN  — lower left
-        (0.40, 0.73, 0.095), // TM1 — upper center-left
-        (0.53, 0.73, 0.095), // TM2 — upper center-right
-        (0.47, 0.88, 0.110), // BD  — center lower
-        (0.70, 0.85, 0.120), // FTM — lower right
-        (0.74, 0.67, 0.115), // RD  — upper right
+        (0.14, 0.78, 0.130), // HH  — far left
+        (0.26, 0.68, 0.125), // CR  — upper left
+        (0.24, 0.86, 0.130), // SN  — lower left
+        (0.37, 0.74, 0.110), // TM1 — upper center-left
+        (0.49, 0.74, 0.110), // TM2 — upper center-right
+        (0.43, 0.88, 0.120), // BD  — center lower
+        (0.64, 0.86, 0.130), // FTM — lower right
+        (0.68, 0.68, 0.125), // RD  — upper right
     ];
     private readonly double[] _padCX     = new double[LaneCount];
     private readonly double[] _padCY     = new double[LaneCount];
     private readonly double[] _padDiamPx = new double[LaneCount];
-    private double _canvasW;
 
     // Fixed canvas elements
-    private readonly Ellipse?[] _pads = new Ellipse?[LaneCount];
+    private readonly Line?[]      _laneLines = new Line?[LaneCount];
+    private readonly Ellipse?[]   _pads      = new Ellipse?[LaneCount];
     private readonly TextBlock?[] _padLabels = new TextBlock?[LaneCount];
 
     // Flash state
@@ -118,7 +118,6 @@ public partial class CueView : UserControl
         double h = canvas.Bounds.Height;
         if (w <= 0 || h <= 0) return;
 
-        _canvasW = w;
         for (int i = 0; i < LaneCount; i++)
         {
             _padCX[i]     = _padLayout[i].Xf * w;
@@ -127,6 +126,24 @@ public partial class CueView : UserControl
         }
 
         double fontSize = Math.Clamp(h * 0.020, 10, 13);
+
+        // Lane guide lines — drawn behind everything
+        for (int i = 0; i < LaneCount; i++)
+        {
+            if (_laneLines[i] == null)
+            {
+                var line = new Line
+                {
+                    Stroke          = new SolidColorBrush(Color.FromArgb(45, 255, 255, 255)),
+                    StrokeThickness = 1.5,
+                    ZIndex          = -1,
+                };
+                _laneLines[i] = line;
+                canvas.Children.Add(line);
+            }
+            _laneLines[i]!.StartPoint = new Point(_padCX[i], 0);
+            _laneLines[i]!.EndPoint   = new Point(_padCX[i], h);
+        }
 
         for (int i = 0; i < LaneCount; i++)
         {
@@ -274,13 +291,9 @@ public partial class CueView : UserControl
     private (double X, double Y) CuePosition(DateTime hitTime, DateTime now, int lane)
     {
         double remainingMs = (hitTime - now).TotalMilliseconds;
-        double progress = 1.0 - remainingMs / TravelMs; // 0 = origin at top, 1 = at pad
-        // Spread origins across full canvas width, amplified outward from center
-        const double SpreadFactor = 3.0;
-        double originX = Math.Clamp(_canvasW / 2 + (_padCX[lane] - _canvasW / 2) * SpreadFactor,
-                                    _canvasW * 0.03, _canvasW * 0.97);
-        double x = originX + progress * (_padCX[lane] - originX);
-        double y = -20    + progress * (_padCY[lane] + 20);
+        double progress = 1.0 - remainingMs / TravelMs;
+        double x = _padCX[lane];
+        double y = -20 + progress * (_padCY[lane] + 20);
         return (x, y);
     }
 
