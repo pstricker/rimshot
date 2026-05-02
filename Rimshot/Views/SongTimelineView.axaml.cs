@@ -188,13 +188,28 @@ public partial class SongTimelineView : UserControl
         canvas.Width = totalWidth;
         _totalWidth  = totalWidth;
 
-        DrawGrid(totalWidth);
-        DrawBarLabels(totalWidth);
-        DrawNotes();
-        DrawLoopOverlay();
-        DrawPlayhead();
-        DrawSnapIndicator();
-        DrawEmptyHint(totalWidth);
+        // Each Draw* step is best-effort: a failure in one (e.g. brush
+        // creation, font fallback, control measurement during pre-attach
+        // construction) must not bubble out of Rebuild and abort the caller's
+        // load flow — that previously caused unrelated UI state (the
+        // "BACKING TRACK" checkbox visibility) to silently regress whenever
+        // a MIDI file with melodic content was selected.
+        SafeDraw(() => DrawGrid(totalWidth),       nameof(DrawGrid));
+        SafeDraw(() => DrawBarLabels(totalWidth),  nameof(DrawBarLabels));
+        SafeDraw(DrawNotes,                        nameof(DrawNotes));
+        SafeDraw(DrawLoopOverlay,                  nameof(DrawLoopOverlay));
+        SafeDraw(DrawPlayhead,                     nameof(DrawPlayhead));
+        SafeDraw(DrawSnapIndicator,                nameof(DrawSnapIndicator));
+        SafeDraw(() => DrawEmptyHint(totalWidth),  nameof(DrawEmptyHint));
+    }
+
+    private static void SafeDraw(Action draw, string name)
+    {
+        try { draw(); }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"SongTimelineView.{name} failed: {ex}");
+        }
     }
 
     private void DrawGrid(double totalWidth)

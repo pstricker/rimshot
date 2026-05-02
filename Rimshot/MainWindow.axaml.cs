@@ -190,7 +190,10 @@ public partial class MainWindow : Window
         _loopSelection.SetSongLength(selected.TotalEighths);
         _cueEngine.LoadSong(selected);
         TheCueView.SetActiveLanes(GetActiveLanes(selected));
-        TheTimelineView.SetSong(selected);
+        // Defense-in-depth: a failure inside the timeline rebuild must not
+        // suppress the BACKING TRACK checkbox or the status label below.
+        try { TheTimelineView.SetSong(selected); }
+        catch (Exception ex) { Console.Error.WriteLine($"SetSong failed: {ex}"); }
         SongStatusLabel.Text = $"{selected.Notes.Length} notes";
         UpdateBackingTrackVisibility(selected);
     }
@@ -226,7 +229,10 @@ public partial class MainWindow : Window
             _loopSelection.SetSongLength(song.TotalEighths);
             _cueEngine.LoadSong(song);
             TheCueView.SetActiveLanes(GetActiveLanes(song));
-            TheTimelineView.SetSong(song);
+            // Defense-in-depth: a failure inside the timeline rebuild must not
+            // suppress the BACKING TRACK checkbox or the status label below.
+            try { TheTimelineView.SetSong(song); }
+            catch (Exception ex) { Console.Error.WriteLine($"SetSong failed: {ex}"); }
             SongStatusLabel.Text = $"{song.Notes.Length} notes, {song.TotalEighths / 8.0:F0} bars";
             UpdateBackingTrackVisibility(song);
         }
