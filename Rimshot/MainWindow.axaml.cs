@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Data;
@@ -11,6 +12,7 @@ using Avalonia.Threading;
 using Rimshot.Core.Models;
 using Rimshot.Core.Services;
 using Rimshot.Services;
+using Rimshot.Views;
 using static Rimshot.Services.CueEngineState;
 
 namespace Rimshot;
@@ -29,9 +31,16 @@ public partial class MainWindow : Window
     private bool _suppressBpmUpdate = false;
     private bool _autoPlay = false;
 
+    public static string AppVersion { get; } =
+        Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? "dev";
+
     public MainWindow()
     {
         InitializeComponent();
+
+        Title = $"Rimshot {AppVersion}";
 
         _music = new MusicService(_audio);
 
@@ -75,6 +84,9 @@ public partial class MainWindow : Window
         TheTempoView.SubdivisionChanged += sub => _metronome.Subdivision = sub;
 
     }
+
+    private void OnAboutClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        new AboutWindow().ShowDialog(this);
 
     private void OnConnectClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {

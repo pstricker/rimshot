@@ -1,0 +1,62 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Rimshot.Views.AboutWindow"
+        Title="About Rimshot"
+        Width="380" Height="320"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#0A0A0A">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="24,20,24,20">
+
+        <TextBlock Grid.Row="0"
+                   Text="RIMSHOT"
+                   FontFamily="{StaticResource BebasNeue}"
+                   FontSize="48"
+                   Foreground="#FFD700"
+                   HorizontalAlignment="Center"/>
+
+        <TextBlock Grid.Row="1"
+                   x:Name="VersionLabel"
+                   FontSize="13"
+                   Foreground="#888888"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,16"/>
+
+        <StackPanel Grid.Row="2" Spacing="10" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Button Content="GITHUB REPOSITORY"
+                    Click="OnRepoClicked"
+                    Width="220"
+                    HorizontalContentAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="#FFD700"
+                    BorderThickness="1"
+                    Foreground="White"/>
+            <Button Content="REPORT A BUG"
+                    Click="OnReportBugClicked"
+                    Width="220"
+                    HorizontalContentAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="#FF1493"
+                    BorderThickness="1"
+                    Foreground="White"/>
+            <Button Content="LICENSE (MIT)"
+                    Click="OnLicenseClicked"
+                    Width="220"
+                    HorizontalContentAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="#444444"
+                    BorderThickness="1"
+                    Foreground="#888888"/>
+        </StackPanel>
+
+        <Button Grid.Row="3"
+                Content="CLOSE"
+                Click="OnCloseClicked"
+                HorizontalAlignment="Right"
+                Background="Transparent"
+                BorderBrush="#444444"
+                BorderThickness="1"
+                Foreground="#888888"/>
+    </Grid>
+</Window>

@@ -6,6 +6,8 @@
 ![Avalonia](https://img.shields.io/badge/Avalonia-12-purple?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey?style=flat-square)
 
+> ⚠️ **Early release (v0.x).** The core experience works, but expect rough edges and the occasional crash. Bug reports and feedback are very welcome — please open an [issue](https://github.com/pstricker/rimshot/issues).
+
 ---
 
 ![Rimshot screenshot](rimshot.png)
