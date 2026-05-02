@@ -214,6 +214,11 @@ public class CueEngine
                     _nextLoopOffset += (loopEnd - loopStart);
                     SeekNoteIndexTo(loopStart);
                     LoopWrapped?.Invoke(this, EventArgs.Empty);
+                    // Bail if the loop range contains no drum notes; otherwise
+                    // we'd wrap forever on the same out-of-range index.
+                    if (_noteIndex >= notes.Length ||
+                        notes[_noteIndex].OffsetInEighths >= loopEnd - 1e-9)
+                        break;
                     continue;
                 }
             }
@@ -225,6 +230,9 @@ public class CueEngine
                     _nextLoopOffset += (loopEnd - loopStart);
                     SeekNoteIndexTo(loopStart);
                     LoopWrapped?.Invoke(this, EventArgs.Empty);
+                    if (_noteIndex >= notes.Length ||
+                        notes[_noteIndex].OffsetInEighths >= loopEnd - 1e-9)
+                        break;
                     continue;
                 }
                 if (_currentSong.ShouldLoop)
@@ -319,6 +327,14 @@ public class CueEngine
                 {
                     _nextMelodicLoopOffset += (loopEnd - loopStart);
                     SeekMelodicIndicesTo(loopStart);
+                    // Bail if the loop range contains no melodic events; otherwise
+                    // we'd wrap forever on the same out-of-range indices.
+                    double afterWrap = double.MaxValue;
+                    if (_melodicNoteIndex < notes.Length)
+                        afterWrap = Math.Min(afterWrap, notes[_melodicNoteIndex].OffsetInEighths);
+                    if (_melodicEventIndex < events.Length)
+                        afterWrap = Math.Min(afterWrap, events[_melodicEventIndex].OffsetInEighths);
+                    if (afterWrap >= loopEnd - 1e-9) break;
                     continue;
                 }
             }
