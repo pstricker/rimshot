@@ -138,7 +138,26 @@ Useful for sanity-checking a MIDI before wondering why nothing's scrolling.
 
 ---
 
+## Download
+
+Pre-built packages for the [latest release](https://github.com/pstricker/rimshot/releases/latest):
+
+| Platform | Download |
+|----------|----------|
+| macOS (Apple Silicon) | [Rimshot-macos-arm64.dmg](https://github.com/pstricker/rimshot/releases/latest/download/Rimshot-macos-arm64.dmg) |
+| macOS (Intel) | [Rimshot-macos-x64.dmg](https://github.com/pstricker/rimshot/releases/latest/download/Rimshot-macos-x64.dmg) |
+| Windows (x64) | [Rimshot-windows-x64.zip](https://github.com/pstricker/rimshot/releases/latest/download/Rimshot-windows-x64.zip) |
+| Linux (x64) | [Rimshot-linux-x64.tar.gz](https://github.com/pstricker/rimshot/releases/latest/download/Rimshot-linux-x64.tar.gz) |
+
+Each package is self-contained — no .NET runtime install required. The Rimshot Inspector ships in the same package as a sub-folder.
+
+> These builds are unsigned. **macOS:** right-click the app → Open the first time to bypass Gatekeeper. **Windows:** SmartScreen → More info → Run anyway. Code signing is on the roadmap.
+
+---
+
 ## Getting Started
+
+> Building from source. If you just want to use Rimshot, grab a [download](#download) above.
 
 ### Prerequisites
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8)

@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Extract version
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Publish Rimshot
+        shell: bash
+        run: dotnet publish Rimshot/Rimshot.csproj -c Release -r win-x64 --self-contained true -o out/Rimshot /p:Version=${{ steps.version.outputs.version }}
+      - name: Publish Inspector
+        shell: bash
+        run: dotnet publish Rimshot.Inspector/Rimshot.Inspector.csproj -c Release -r win-x64 --self-contained true -o out/Rimshot/Inspector /p:Version=${{ steps.version.outputs.version }}
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path out/Rimshot -DestinationPath Rimshot-windows-x64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Rimshot-windows-x64
+          path: Rimshot-windows-x64.zip
+          if-no-files-found: error
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Publish Rimshot
+        run: dotnet publish Rimshot/Rimshot.csproj -c Release -r linux-x64 --self-contained true -o out/Rimshot /p:Version=${{ steps.version.outputs.version }}
+      - name: Publish Inspector
+        run: dotnet publish Rimshot.Inspector/Rimshot.Inspector.csproj -c Release -r linux-x64 --self-contained true -o out/Rimshot/Inspector /p:Version=${{ steps.version.outputs.version }}
+      - name: Tarball
+        run: |
+          chmod +x out/Rimshot/Rimshot
+          chmod +x out/Rimshot/Inspector/Rimshot.Inspector
+          tar -czvf Rimshot-linux-x64.tar.gz -C out Rimshot
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Rimshot-linux-x64
+          path: Rimshot-linux-x64.tar.gz
+          if-no-files-found: error
+
+  build-macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Build arm64 dmg
+        run: ./.github/workflows/macos-bundle.sh osx-arm64 arm64 ${{ steps.version.outputs.version }} dist
+      - name: Build x64 dmg
+        run: ./.github/workflows/macos-bundle.sh osx-x64 x64 ${{ steps.version.outputs.version }} dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Rimshot-macos
+          path: dist/*.dmg
+          if-no-files-found: error
+
+  release:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            artifacts/**/*.zip
+            artifacts/**/*.tar.gz
+            artifacts/**/*.dmg
