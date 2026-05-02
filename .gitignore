@@ -30,3 +30,6 @@ CLAUDE.MD
 
 # Design
 mockups/
+
+# SoundFonts — must be downloaded locally, not committed
+Rimshot/Sounds/soundfonts/*.sf2
