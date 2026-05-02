@@ -53,6 +53,18 @@ public partial class SongTimelineView : UserControl
     private Song?  _song;
     private double _pxPerEighth = DefaultPxPerEighth;
 
+    // Total canvas width in pixels. Cached during Rebuild so the eighth↔X
+    // mirror helpers below can reference it without recomputing.
+    private double _totalWidth;
+
+    // Mirror helpers: timeline X axis is reversed relative to the natural
+    // (eighths * px) order so that earlier-in-song bars sit on the RIGHT
+    // (matching CueView's scroll direction where future is left, "now" is
+    // right). Bar 1 → right edge; last bar → left edge; playhead moves
+    // right → left as the song plays.
+    private double EighthsToX(double eighths) => _totalWidth - eighths * _pxPerEighth;
+    private double XToEighths(double x)       => (_totalWidth - x) / _pxPerEighth;
+
     // Drag state machine: "None" (idle), "Creating" (initial press → drag),
     // "MoveStart" / "MoveEnd" (refining an existing handle).
     private enum DragMode { None, Creating, MoveStart, MoveEnd }
@@ -113,6 +125,16 @@ public partial class SongTimelineView : UserControl
     {
         _song = song;
         Rebuild();
+        // Mirrored layout: bar 1 lives at the RIGHT edge of the canvas, so
+        // scroll the viewport to that edge once the layout has measured.
+        Dispatcher.UIThread.Post(ScrollToBarOne, DispatcherPriority.Background);
+    }
+
+    private void ScrollToBarOne()
+    {
+        if (TimelineScroll is null) return;
+        double max = Math.Max(0, _totalWidth - TimelineScroll.Viewport.Width);
+        TimelineScroll.Offset = new Vector(max, TimelineScroll.Offset.Y);
     }
 
     private void OnLoopChanged(object? sender, EventArgs e) =>
@@ -158,11 +180,13 @@ public partial class SongTimelineView : UserControl
         if (_song is null || _song.TotalEighths <= 0)
         {
             canvas.Width = 0;
+            _totalWidth  = 0;
             return;
         }
 
         double totalWidth = _song.TotalEighths * _pxPerEighth;
         canvas.Width = totalWidth;
+        _totalWidth  = totalWidth;
 
         DrawGrid(totalWidth);
         DrawBarLabels(totalWidth);
@@ -191,7 +215,7 @@ public partial class SongTimelineView : UserControl
                            : (Math.Abs(e % 1) < 1e-6) ? 0.10
                            :                            0.06;
 
-            double x = e * _pxPerEighth;
+            double x = EighthsToX(e);
             var line = new Line
             {
                 StartPoint      = new Point(x, bodyTop),
@@ -226,7 +250,11 @@ public partial class SongTimelineView : UserControl
                 IsHitTestVisible = false,
                 ZIndex           = 5,
             };
-            Canvas.SetLeft(label, bar * pxPerBar + 4);
+            // Mirror: bar `n`'s region spans from EighthsToX((n+1)*8) on the
+            // left to EighthsToX(n*8) on the right. Place the label 4 px in
+            // from the LEFT edge of that region so labels still read 1, 2,
+            // 3… going right → left across the timeline.
+            Canvas.SetLeft(label, EighthsToX((bar + 1) * 8) + 4);
             Canvas.SetTop(label, 1);
             TimelineCanvas.Children.Add(label);
             _labelChildren.Add(label);
@@ -254,14 +282,18 @@ public partial class SongTimelineView : UserControl
         var laneToRow = new Dictionary<int, int>();
         for (int i = 0; i < usedLanes.Count; i++) laneToRow[usedLanes[i]] = i;
 
+        double noteWidth = Math.Max(2.0, _pxPerEighth * 0.4);
         foreach (var note in _song.Notes)
         {
             if (!laneToRow.TryGetValue(note.Lane, out int row)) continue;
-            double x = note.OffsetInEighths * _pxPerEighth;
+            // Mirror: anchor the rect so its RIGHT edge sits at the
+            // mirrored note position (matches original behavior where the
+            // LEFT edge sat at the unmirrored note position).
+            double x = EighthsToX(note.OffsetInEighths) - noteWidth;
             double y = rowsTop + row * rowHeight;
             var rect = new Rectangle
             {
-                Width  = Math.Max(2.0, _pxPerEighth * 0.4),
+                Width  = noteWidth,
                 Height = Math.Max(2.0, rowHeight - 1.5),
                 Fill   = new SolidColorBrush(lanes[note.Lane].Color),
                 IsHitTestVisible = false,
@@ -279,9 +311,10 @@ public partial class SongTimelineView : UserControl
         if (Loop is null || !Loop.IsActive) return;
 
         double height = TimelineCanvas.Height;
-        double startX = Loop.StartEighths * _pxPerEighth;
-        double endX   = Loop.EndEighths   * _pxPerEighth;
-        double width  = Math.Max(1.0, endX - startX);
+        // Mirror: start (earlier in song) → right side; end (later) → left side.
+        double startX = EighthsToX(Loop.StartEighths);
+        double endX   = EighthsToX(Loop.EndEighths);
+        double width  = Math.Max(1.0, startX - endX);
 
         _loopOverlay = new Rectangle
         {
@@ -291,15 +324,15 @@ public partial class SongTimelineView : UserControl
             IsHitTestVisible = false,
             ZIndex = 1,
         };
-        Canvas.SetLeft(_loopOverlay, startX);
+        Canvas.SetLeft(_loopOverlay, endX);
         Canvas.SetTop(_loopOverlay, TimelineBodyTop);
         TimelineCanvas.Children.Add(_loopOverlay);
 
         // Subtle bordered top edge for visual definition
         var topEdge = new Line
         {
-            StartPoint = new Point(startX, TimelineBodyTop),
-            EndPoint   = new Point(endX,   TimelineBodyTop),
+            StartPoint = new Point(endX,   TimelineBodyTop),
+            EndPoint   = new Point(startX, TimelineBodyTop),
             Stroke     = PinkBrush,
             StrokeThickness = 2,
             IsHitTestVisible = false,
@@ -307,7 +340,7 @@ public partial class SongTimelineView : UserControl
         };
         TimelineCanvas.Children.Add(topEdge);
 
-        // Drag handles
+        // Drag handles — start handle on the right, end handle on the left.
         _handleStart = MakeHandle(startX, height);
         _handleEnd   = MakeHandle(endX,   height);
         TimelineCanvas.Children.Add(_handleStart);
@@ -406,14 +439,14 @@ public partial class SongTimelineView : UserControl
         if (_song is null || Loop is null) return;
         var pos = e.GetPosition(TimelineCanvas);
         if (pos.Y < TimelineBodyTop) return;
-        double rawEighths = pos.X / _pxPerEighth;
+        double rawEighths = XToEighths(pos.X);
         rawEighths = Math.Clamp(rawEighths, 0, _song.TotalEighths);
 
-        // Hit-test handles first
+        // Hit-test handles first (use mirrored X positions)
         if (Loop.IsActive)
         {
-            double startX = Loop.StartEighths * _pxPerEighth;
-            double endX   = Loop.EndEighths   * _pxPerEighth;
+            double startX = EighthsToX(Loop.StartEighths);
+            double endX   = EighthsToX(Loop.EndEighths);
             if (Math.Abs(pos.X - startX) <= HandleHitWidth / 2)
             {
                 _dragMode = DragMode.MoveStart;
@@ -440,7 +473,7 @@ public partial class SongTimelineView : UserControl
     {
         if (_song is null || Loop is null) return;
         var pos = e.GetPosition(TimelineCanvas);
-        double rawEighths = Math.Clamp(pos.X / _pxPerEighth, 0, _song.TotalEighths);
+        double rawEighths = Math.Clamp(XToEighths(pos.X), 0, _song.TotalEighths);
 
         // Hover detection (no drag): cursor + handle highlight.
         if (_dragMode == DragMode.None)
@@ -488,8 +521,8 @@ public partial class SongTimelineView : UserControl
     private void UpdateHover(double mouseX)
     {
         if (Loop is null || !Loop.IsActive) return;
-        double startX = Loop.StartEighths * _pxPerEighth;
-        double endX   = Loop.EndEighths   * _pxPerEighth;
+        double startX = EighthsToX(Loop.StartEighths);
+        double endX   = EighthsToX(Loop.EndEighths);
         bool prevS = _hoverStart, prevE = _hoverEnd;
         _hoverStart = Math.Abs(mouseX - startX) <= HandleHitWidth / 2;
         _hoverEnd   = Math.Abs(mouseX - endX)   <= HandleHitWidth / 2;
@@ -516,7 +549,7 @@ public partial class SongTimelineView : UserControl
             _snapIndicator.Opacity = 0;
             return;
         }
-        double x = _liveSnapEighths.Value * _pxPerEighth;
+        double x = EighthsToX(_liveSnapEighths.Value);
         _snapIndicator.StartPoint = new Point(x, TimelineBodyTop);
         _snapIndicator.EndPoint   = new Point(x, TimelineCanvas.Height);
         _snapIndicator.Opacity    = 0.75;
@@ -574,7 +607,7 @@ public partial class SongTimelineView : UserControl
             return;
         }
 
-        double x = pos * _pxPerEighth;
+        double x = EighthsToX(pos);
         _playhead.StartPoint = new Point(x, TimelineBodyTop);
         _playhead.EndPoint   = new Point(x, TimelineCanvas.Height);
         _playhead.Opacity    = 0.85;
