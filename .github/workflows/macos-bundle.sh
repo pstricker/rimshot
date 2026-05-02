@@ -24,12 +24,12 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR" "$OUT_DIR"
 dotnet publish Rimshot/Rimshot.csproj \
   -c Release -r "$RID" --self-contained true \
   -o "$MACOS_DIR" \
-  /p:Version="$VERSION"
+  -p:Version="$VERSION"
 
 dotnet publish Rimshot.Inspector/Rimshot.Inspector.csproj \
   -c Release -r "$RID" --self-contained true \
   -o "$MACOS_DIR/Inspector" \
-  /p:Version="$VERSION"
+  -p:Version="$VERSION"
 
 cat > "$APP_DIR/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>

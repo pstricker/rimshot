@@ -22,10 +22,10 @@ jobs:
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
       - name: Publish Rimshot
         shell: bash
-        run: dotnet publish Rimshot/Rimshot.csproj -c Release -r win-x64 --self-contained true -o out/Rimshot /p:Version=${{ steps.version.outputs.version }}
+        run: dotnet publish Rimshot/Rimshot.csproj -c Release -r win-x64 --self-contained true -o out/Rimshot -p:Version=${{ steps.version.outputs.version }}
       - name: Publish Inspector
         shell: bash
-        run: dotnet publish Rimshot.Inspector/Rimshot.Inspector.csproj -c Release -r win-x64 --self-contained true -o out/Rimshot/Inspector /p:Version=${{ steps.version.outputs.version }}
+        run: dotnet publish Rimshot.Inspector/Rimshot.Inspector.csproj -c Release -r win-x64 --self-contained true -o out/Rimshot/Inspector -p:Version=${{ steps.version.outputs.version }}
       - name: Zip
         shell: pwsh
         run: Compress-Archive -Path out/Rimshot -DestinationPath Rimshot-windows-x64.zip
@@ -46,9 +46,9 @@ jobs:
         id: version
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
       - name: Publish Rimshot
-        run: dotnet publish Rimshot/Rimshot.csproj -c Release -r linux-x64 --self-contained true -o out/Rimshot /p:Version=${{ steps.version.outputs.version }}
+        run: dotnet publish Rimshot/Rimshot.csproj -c Release -r linux-x64 --self-contained true -o out/Rimshot -p:Version=${{ steps.version.outputs.version }}
       - name: Publish Inspector
-        run: dotnet publish Rimshot.Inspector/Rimshot.Inspector.csproj -c Release -r linux-x64 --self-contained true -o out/Rimshot/Inspector /p:Version=${{ steps.version.outputs.version }}
+        run: dotnet publish Rimshot.Inspector/Rimshot.Inspector.csproj -c Release -r linux-x64 --self-contained true -o out/Rimshot/Inspector -p:Version=${{ steps.version.outputs.version }}
       - name: Tarball
         run: |
           chmod +x out/Rimshot/Rimshot
