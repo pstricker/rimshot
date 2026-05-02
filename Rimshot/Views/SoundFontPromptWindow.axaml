@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Rimshot.Views.SoundFontPromptWindow"
+        Title="Backing Track Setup"
+        Width="440" Height="320"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#0A0A0A">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="24,20,24,20">
+
+        <TextBlock Grid.Row="0"
+                   Text="SOUNDFONT REQUIRED"
+                   FontFamily="{StaticResource BebasNeue}"
+                   FontSize="32"
+                   Foreground="#FFD700"
+                   HorizontalAlignment="Center"/>
+
+        <TextBlock Grid.Row="1"
+                   Text="Backing track needs a General MIDI .sf2 file"
+                   FontSize="13"
+                   Foreground="#888888"
+                   HorizontalAlignment="Center"
+                   Margin="0,2,0,16"/>
+
+        <StackPanel Grid.Row="2" Spacing="10" VerticalAlignment="Center">
+            <TextBlock TextWrapping="Wrap"
+                       FontSize="13"
+                       Foreground="#CCCCCC"
+                       LineHeight="20"
+                       Text="Rimshot uses a SoundFont (.sf2) to play the non-drum parts of your MIDI files. Browse for one on your computer and Rimshot will copy it into the right spot."/>
+            <TextBlock TextWrapping="Wrap"
+                       FontSize="12"
+                       Foreground="#888888"
+                       LineHeight="18"
+                       Text="FluidR3 GM (MIT-licensed) is a solid free choice — search for &quot;FluidR3_GM.sf2&quot;."/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3"
+                    Orientation="Horizontal"
+                    Spacing="10"
+                    HorizontalAlignment="Right">
+            <Button Content="CANCEL"
+                    Click="OnCancelClicked"
+                    Width="120"
+                    HorizontalContentAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="#444444"
+                    BorderThickness="1"
+                    Foreground="#888888"/>
+            <Button Content="BROWSE…"
+                    Click="OnBrowseClicked"
+                    Width="140"
+                    HorizontalContentAlignment="Center"
+                    Background="Transparent"
+                    BorderBrush="#FFD700"
+                    BorderThickness="1"
+                    Foreground="#FFD700"/>
+        </StackPanel>
+    </Grid>
+</Window>

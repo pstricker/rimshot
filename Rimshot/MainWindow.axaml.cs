@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -30,6 +31,7 @@ public partial class MainWindow : Window
     private bool _connected;
     private bool _hiHatOpen = false;
     private bool _suppressBpmUpdate = false;
+    private bool _suppressBackingToggle = false;
     private bool _autoPlay = false;
 
     public static string AppVersion { get; } =
@@ -45,13 +47,6 @@ public partial class MainWindow : Window
         Title = $"Rimshot {AppVersion}";
 
         _music = new MusicService(_audio);
-        // Soundfont parses on a background thread; re-evaluate the BACKING
-        // TRACK checkbox once it's ready in case the user picked a song first.
-        _music.AvailableChanged += (_, _) =>
-            Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                if (SongCombo.SelectedItem is Song s) UpdateBackingTrackVisibility(s);
-            });
 
         // Initialize loop service with the engine's default song length.
         _loopSelection.SetSongLength(_cueEngine.CurrentSong.TotalEighths);
@@ -276,15 +271,100 @@ public partial class MainWindow : Window
 
     private void OnBackingTrackChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        _music.SetEnabled(BackingTrackCheck.IsChecked == true);
+        if (_suppressBackingToggle) return;
+
+        if (BackingTrackCheck.IsChecked != true)
+        {
+            _music.SetEnabled(false);
+            return;
+        }
+
+        if (_music.IsAvailable)
+        {
+            _music.SetEnabled(true);
+            return;
+        }
+
+        _ = PromptForSoundFontAsync();
+    }
+
+    private async Task PromptForSoundFontAsync()
+    {
+        bool wantsBrowse = await new SoundFontPromptWindow().ShowDialog<bool>(this);
+        if (!wantsBrowse)
+        {
+            UncheckBackingTrack();
+            return;
+        }
+
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Select a General MIDI SoundFont (.sf2)",
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("SoundFont 2") { Patterns = ["*.sf2"] },
+            ],
+        });
+
+        if (files.Count == 0)
+        {
+            UncheckBackingTrack();
+            return;
+        }
+
+        SongStatusLabel.Text = "Loading soundfont…";
+        bool ok = await InstallSoundFontAsync(files[0].Path.LocalPath);
+        if (ok)
+        {
+            _music.SetEnabled(true);
+            SongStatusLabel.Text = "Soundfont loaded.";
+        }
+        else
+        {
+            UncheckBackingTrack();
+        }
+    }
+
+    private async Task<bool> InstallSoundFontAsync(string sourcePath)
+    {
+        try
+        {
+            string destDir  = Path.Combine(AppContext.BaseDirectory, "Sounds", "soundfonts");
+            Directory.CreateDirectory(destDir);
+            string destPath = Path.Combine(destDir, Path.GetFileName(sourcePath));
+
+            // Skip the copy if the user picked the file from inside the
+            // destination folder — File.Copy(src, src) would throw.
+            if (!string.Equals(
+                    Path.GetFullPath(sourcePath),
+                    Path.GetFullPath(destPath),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                File.Copy(sourcePath, destPath, overwrite: true);
+            }
+
+            return await _music.LoadSoundFontAsync(destPath);
+        }
+        catch (Exception ex)
+        {
+            SongStatusLabel.Text = $"Soundfont install failed: {ex.Message}";
+            return false;
+        }
+    }
+
+    private void UncheckBackingTrack()
+    {
+        _suppressBackingToggle = true;
+        BackingTrackCheck.IsChecked = false;
+        _suppressBackingToggle = false;
+        _music.SetEnabled(false);
     }
 
     private void UpdateBackingTrackVisibility(Song song)
     {
-        bool visible = song.HasBackingTrack && _music.IsAvailable;
-        BackingTrackCheck.IsVisible = visible;
-        BackingTrackCheck.IsChecked = false;
-        _music.SetEnabled(false);
+        BackingTrackCheck.IsVisible = song.HasBackingTrack;
+        UncheckBackingTrack();
         _music.Reset();
     }
 

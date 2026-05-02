@@ -49,7 +49,23 @@ Flip the **AUTO PLAY** checkbox and Rimshot plays the song for you — perfect c
 ### 🎹 Backing Track
 Loaded a `.mid` file with melody, bass, or anything else that isn't drums? Check the **BACKING TRACK** box and Rimshot synthesizes the rest of the music alongside your drum cues — so you can play *along* with the song instead of in silence. Velocities, program changes, volume, pan, sustain pedal, and pitch bend are all preserved.
 
-The checkbox only appears when (a) a loaded MIDI actually contains non-drum channels and (b) you've dropped a General MIDI SoundFont (`.sf2`) into `Rimshot/Sounds/soundfonts/`. **FluidR3 GM** (MIT-licensed) is recommended — see `Rimshot/Sounds/soundfonts/README.md` for download mirrors. No soundfont, no problem: drum practice still works as normal.
+The checkbox appears whenever the loaded MIDI has non-drum channels. Backing track requires a General MIDI SoundFont (`.sf2`) — Rimshot doesn't ship with one. The first time you tick the box without a soundfont installed, Rimshot pops up a file picker; point it at any `.sf2` and Rimshot copies it into the right place and starts playing. Cancel the picker and the checkbox quietly unticks itself.
+
+**FluidR3 GM** (MIT-licensed, ~25 MB trimmed / ~141 MB full) is the recommended soundfont. Mirrors:
+
+- https://github.com/FluidSynth/fluidsynth/wiki/SoundFont
+- https://musical-artifacts.com/artifacts/738
+- https://archive.org/details/fluidr3-gm-gs
+
+Prefer to install it by hand? Drop the `.sf2` into the `Sounds/soundfonts/` folder next to the Rimshot executable:
+
+| Build | Path |
+|-------|------|
+| Windows installer | `%LOCALAPPDATA%\Programs\Rimshot\Sounds\soundfonts\` |
+| Linux tarball | `<extract-dir>/Rimshot/Sounds/soundfonts/` |
+| From source | `Rimshot/Sounds/soundfonts/` |
+
+No soundfont, no problem: drum practice works the same either way.
 
 ### 🥁 8-Lane Drum Kit
 
