@@ -95,6 +95,16 @@
                             BorderThickness="1"
                             Foreground="#888888"
                             Padding="14,6"/>
+                    <Button x:Name="ClearLoopButton"
+                            Content="✕ CLEAR LOOP"
+                            Click="OnClearLoopClicked"
+                            IsEnabled="False"
+                            Background="Transparent"
+                            BorderBrush="#FF1493"
+                            BorderThickness="1"
+                            Foreground="#888888"
+                            Padding="14,6"
+                            ToolTip.Tip="Remove the practice loop and play the entire song"/>
                 </StackPanel>
 
                 <!-- Right: BPM -->
@@ -147,6 +157,11 @@
                            Margin="6,0,0,0"/>
             </StackPanel>
         </Border>
+
+        <!-- Song Timeline (loop selection) -->
+        <views:SongTimelineView x:Name="TheTimelineView"
+                                DockPanel.Dock="Top"
+                                Height="120"/>
 
         <!-- Tabs -->
         <TabControl Background="#0A0A0A">

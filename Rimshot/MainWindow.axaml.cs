@@ -20,7 +20,8 @@ namespace Rimshot;
 public partial class MainWindow : Window
 {
     private readonly MidiService _midi = new();
-    private readonly CueEngine _cueEngine = new();
+    private readonly LoopSelectionService _loopSelection = new();
+    private readonly CueEngine _cueEngine;
     private readonly AudioService _audio = new();
     private readonly MetronomeService _metronome = new();
     private readonly MusicService _music;
@@ -38,11 +39,17 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
+        _cueEngine = new CueEngine(_loopSelection);
         InitializeComponent();
 
         Title = $"Rimshot {AppVersion}";
 
         _music = new MusicService(_audio);
+
+        // Initialize loop service with the engine's default song length.
+        _loopSelection.SetSongLength(_cueEngine.CurrentSong.TotalEighths);
+        _loopSelection.LoopChanged += (_, _) =>
+            Dispatcher.UIThread.InvokeAsync(UpdateClearLoopButton);
 
         AddHandler(KeyDownEvent, OnKeyDownTunnel, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         AddHandler(KeyUpEvent, OnKeyUpTunnel, Avalonia.Interactivity.RoutingStrategies.Tunnel);
@@ -72,6 +79,11 @@ public partial class MainWindow : Window
         TheCueView.Metronome = _metronome;
         TheCueView.Audio = _audio;
         TheCueView.Music = _music;
+        TheCueView.Loop = _loopSelection;
+
+        TheTimelineView.Engine    = _cueEngine;
+        TheTimelineView.Loop      = _loopSelection;
+        TheTimelineView.SetSong(_cueEngine.CurrentSong);
 
         TheTempoView.BpmChanged += bpm =>
         {
@@ -143,6 +155,7 @@ public partial class MainWindow : Window
     {
         TheCueView.ClearCues();
         _cueEngine.Restart();
+        if (_loopSelection.IsActive) _cueEngine.Seek(_loopSelection.StartEighths);
         _metronome.Start();
         _music.Reset();
         UpdateTransportButtons();
@@ -173,8 +186,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        _loopSelection.ClearLoop();
+        _loopSelection.SetSongLength(selected.TotalEighths);
         _cueEngine.LoadSong(selected);
         TheCueView.SetActiveLanes(GetActiveLanes(selected));
+        TheTimelineView.SetSong(selected);
         SongStatusLabel.Text = $"{selected.Notes.Length} notes";
         UpdateBackingTrackVisibility(selected);
     }
@@ -206,8 +222,11 @@ public partial class MainWindow : Window
             _songItems.Insert(_songItems.Count - 1, song);
             SongCombo.SelectedItem = song;
 
+            _loopSelection.ClearLoop();
+            _loopSelection.SetSongLength(song.TotalEighths);
             _cueEngine.LoadSong(song);
             TheCueView.SetActiveLanes(GetActiveLanes(song));
+            TheTimelineView.SetSong(song);
             SongStatusLabel.Text = $"{song.Notes.Length} notes, {song.TotalEighths / 8.0:F0} bars";
             UpdateBackingTrackVisibility(song);
         }
@@ -220,6 +239,17 @@ public partial class MainWindow : Window
 
     private void OnClearClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
         _hits.Clear();
+
+    private void OnClearLoopClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        _loopSelection.ClearLoop();
+
+    private void UpdateClearLoopButton()
+    {
+        ClearLoopButton.IsEnabled = _loopSelection.IsActive;
+        ClearLoopButton.Foreground = _loopSelection.IsActive
+            ? Avalonia.Media.Brushes.HotPink
+            : Avalonia.Media.Brushes.Gray;
+    }
 
     private void OnAutoPlayChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {

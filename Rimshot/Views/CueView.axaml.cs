@@ -6,6 +6,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Rimshot.Core.Models;
+using Rimshot.Core.Services;
 using Rimshot.Services;
 
 namespace Rimshot.Views;
@@ -98,6 +99,9 @@ public partial class CueView : UserControl
     public bool AutoPlay { get; set; }
     public AudioService? Audio { get; set; }
     public MusicService? Music { get; set; }
+    public LoopSelectionService? Loop { get; set; }
+
+    private const double DimmedCueOpacity = 0.30;
 
     public void SetHiHatOpen(bool isOpen)
     {
@@ -458,6 +462,10 @@ public partial class CueView : UserControl
         }
 
         // Update and expire note cues; auto-fire when AutoPlay is on
+        bool   loopActive = Loop is { IsActive: true };
+        double loopStart  = loopActive ? Loop!.StartEighths : 0;
+        double loopEnd    = loopActive ? Loop!.EndEighths   : 0;
+        double eighthMs   = Engine != null ? Engine.EighthNoteMs : 30000.0 / 90;
         for (int i = _activeCues.Count - 1; i >= 0; i--)
         {
             var cue = _activeCues[i];
@@ -473,6 +481,23 @@ public partial class CueView : UserControl
                 {
                     AutoFireCue(cue, now);
                     cue.AutoFired = true;
+                }
+
+                // Dim cues that fall outside the active loop bounds. With a
+                // loop active the engine no longer schedules them, but cues
+                // pre-scheduled before a live edit can still drift here.
+                if (loopActive && Engine != null)
+                {
+                    double absoluteEighths = (cue.HitTime - Engine.SongStartTime).TotalMilliseconds / eighthMs;
+                    double span = loopEnd - loopStart;
+                    double inLoop = span > 0 ? absoluteEighths - Math.Floor(absoluteEighths / span) * span : 0;
+                    double projectedSongOffset = loopStart + inLoop;
+                    bool inside = projectedSongOffset >= loopStart - 1e-6 && projectedSongOffset < loopEnd - 1e-6;
+                    cue.Visual.Opacity = inside ? 1.0 : DimmedCueOpacity;
+                }
+                else
+                {
+                    cue.Visual.Opacity = 1.0;
                 }
 
                 double cW = CueWidth;

@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Rimshot.Views.SongTimelineView"
+             ClipToBounds="True">
+    <Border Background="#0F0F12"
+            BorderBrush="#222222"
+            BorderThickness="0,0,0,1">
+        <Grid>
+            <ScrollViewer x:Name="TimelineScroll"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled"
+                          AllowAutoHide="False">
+                <Canvas x:Name="TimelineCanvas"
+                        Background="Transparent"
+                        Height="100"
+                        ClipToBounds="True"/>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>
