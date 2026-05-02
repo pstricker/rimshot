@@ -45,6 +45,13 @@ public partial class MainWindow : Window
         Title = $"Rimshot {AppVersion}";
 
         _music = new MusicService(_audio);
+        // Soundfont parses on a background thread; re-evaluate the BACKING
+        // TRACK checkbox once it's ready in case the user picked a song first.
+        _music.AvailableChanged += (_, _) =>
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (SongCombo.SelectedItem is Song s) UpdateBackingTrackVisibility(s);
+            });
 
         // Initialize loop service with the engine's default song length.
         _loopSelection.SetSongLength(_cueEngine.CurrentSong.TotalEighths);

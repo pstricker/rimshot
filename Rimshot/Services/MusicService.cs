@@ -38,6 +38,11 @@ public unsafe class MusicService : IDisposable
 
     public bool IsAvailable => _isAvailable;
 
+    // Fires once when the soundfont finishes loading and the synth becomes
+    // playable. Used by UI code to re-evaluate features that depend on
+    // backing-track support after the async init completes.
+    public event EventHandler? AvailableChanged;
+
     public MusicService(AudioService audio)
     {
         _audio = audio;
@@ -91,6 +96,7 @@ public unsafe class MusicService : IDisposable
             _renderThread.Start();
 
             _isAvailable = true;
+            AvailableChanged?.Invoke(this, EventArgs.Empty);
         }
         catch
         {
