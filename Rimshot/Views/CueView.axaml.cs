@@ -99,7 +99,36 @@ public partial class CueView : UserControl
     public bool AutoPlay { get; set; }
     public AudioService? Audio { get; set; }
     public MusicService? Music { get; set; }
-    public LoopSelectionService? Loop { get; set; }
+    private LoopSelectionService? _loop;
+    public LoopSelectionService? Loop
+    {
+        get => _loop;
+        set
+        {
+            if (_loop is not null) _loop.LoopChanged -= OnLoopChanged;
+            _loop = value;
+            if (_loop is not null) _loop.LoopChanged += OnLoopChanged;
+        }
+    }
+
+    private void OnLoopChanged(object? sender, EventArgs e)
+    {
+        // The engine flushed its scheduling queues; drop any in-flight cues so
+        // AutoPlay doesn't fire stale ones whose HitTime is no longer part of
+        // the active loop's schedule.
+        Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            var now = DateTime.Now;
+            for (int i = _activeCues.Count - 1; i >= 0; i--)
+            {
+                if (_activeCues[i].HitTime > now)
+                {
+                    CueCanvas.Children.Remove(_activeCues[i].Visual);
+                    _activeCues.RemoveAt(i);
+                }
+            }
+        });
+    }
 
     private const double DimmedCueOpacity = 0.30;
 

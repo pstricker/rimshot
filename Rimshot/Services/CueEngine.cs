@@ -285,6 +285,11 @@ public class CueEngine
     // Walks Notes and ControlEvents in merged offset order, enqueuing NoteOn/NoteOff
     // pairs and control-event MIDI messages with absolute scheduled times. Uses a
     // priority queue because a NoteOff can land before the next NoteOn.
+    //
+    // When a loop is active, the same wrap math used for drum cues applies:
+    // events past loopEnd in the current iteration are skipped, indices wrap to
+    // the first event >= loopStart, and any note straddling loopEnd has its
+    // NoteOff clamped to the boundary so it doesn't ring through the wrap.
     private void SeedMelodicEventsUpTo(DateTime until)
     {
         if (_melodicEnded || _currentSong.MelodicTrack is not { } track) return;
@@ -293,12 +298,31 @@ public class CueEngine
         var notes = track.Notes;
         var events = track.ControlEvents;
 
+        bool   loopActive = _loop is { IsActive: true };
+        double loopStart  = loopActive ? _loop!.StartEighths : 0;
+        double loopEnd    = loopActive ? _loop!.EndEighths   : 0;
+
         while (true)
         {
             bool notesDone  = _melodicNoteIndex  >= notes.Length;
             bool eventsDone = _melodicEventIndex >= events.Length;
 
-            if (notesDone && eventsDone)
+            // Wrap when looping: either next event is past loopEnd, or both
+            // streams exhausted within this iteration.
+            if (loopActive)
+            {
+                double nextLocal = double.MaxValue;
+                if (!notesDone)  nextLocal = Math.Min(nextLocal, notes[_melodicNoteIndex].OffsetInEighths);
+                if (!eventsDone) nextLocal = Math.Min(nextLocal, events[_melodicEventIndex].OffsetInEighths);
+
+                if (nextLocal >= loopEnd - 1e-9)
+                {
+                    _nextMelodicLoopOffset += (loopEnd - loopStart);
+                    SeekMelodicIndicesTo(loopStart);
+                    continue;
+                }
+            }
+            else if (notesDone && eventsDone)
             {
                 if (_currentSong.ShouldLoop)
                 {
@@ -311,12 +335,16 @@ public class CueEngine
                 break;
             }
 
+            // Same time-anchor convention as drum cues: in loop mode,
+            // SongStartTime is anchored to the start of the current loop
+            // iteration, so subtract loopStart to get iteration-relative time.
+            double iterShift = loopActive ? loopStart : 0;
             double nextNoteOffset = notesDone
                 ? double.MaxValue
-                : _nextMelodicLoopOffset + notes[_melodicNoteIndex].OffsetInEighths;
+                : _nextMelodicLoopOffset + notes[_melodicNoteIndex].OffsetInEighths - iterShift;
             double nextEventOffset = eventsDone
                 ? double.MaxValue
-                : _nextMelodicLoopOffset + events[_melodicEventIndex].OffsetInEighths;
+                : _nextMelodicLoopOffset + events[_melodicEventIndex].OffsetInEighths - iterShift;
 
             if (nextNoteOffset <= nextEventOffset)
             {
@@ -324,8 +352,17 @@ public class CueEngine
                 DateTime onTime = SongStartTime + TimeSpan.FromMilliseconds(nextNoteOffset * eighthMs);
                 if (onTime > until) break;
 
-                DateTime offTime = SongStartTime + TimeSpan.FromMilliseconds(
-                    (nextNoteOffset + n.DurationInEighths) * eighthMs);
+                // If the note's tail would extend past loopEnd, clamp the
+                // NoteOff to just before the boundary so the synth releases
+                // cleanly before the next iteration's NoteOn arrives.
+                double offEighths = nextNoteOffset + n.DurationInEighths;
+                if (loopActive)
+                {
+                    double iterEnd = _nextMelodicLoopOffset + (loopEnd - loopStart);
+                    if (offEighths > iterEnd) offEighths = iterEnd - 1e-3;
+                }
+
+                DateTime offTime = SongStartTime + TimeSpan.FromMilliseconds(offEighths * eighthMs);
 
                 _pendingMelodic.Enqueue(
                     new MelodicCue(onTime, n.Channel, 0x90, (byte)n.NoteNumber, (byte)n.Velocity),
@@ -357,6 +394,36 @@ public class CueEngine
         }
     }
 
+    // Mirror of SeekNoteIndexTo for the melodic track (notes + control events),
+    // used on Seek and on loop wraps.
+    private void SeekMelodicIndicesTo(double targetEighths)
+    {
+        if (_currentSong.MelodicTrack is not { } track)
+        {
+            _melodicNoteIndex = 0;
+            _melodicEventIndex = 0;
+            return;
+        }
+
+        int lo = 0, hi = track.Notes.Length;
+        while (lo < hi)
+        {
+            int mid = (lo + hi) >> 1;
+            if (track.Notes[mid].OffsetInEighths < targetEighths - 1e-9) lo = mid + 1;
+            else hi = mid;
+        }
+        _melodicNoteIndex = lo;
+
+        lo = 0; hi = track.ControlEvents.Length;
+        while (lo < hi)
+        {
+            int mid = (lo + hi) >> 1;
+            if (track.ControlEvents[mid].OffsetInEighths < targetEighths - 1e-9) lo = mid + 1;
+            else hi = mid;
+        }
+        _melodicEventIndex = lo;
+    }
+
     /// <summary>
     /// Repositions the playhead so that <paramref name="targetEighths"/> is the
     /// current song-relative position. Clears all pending queues and re-seeds
@@ -384,8 +451,7 @@ public class CueEngine
         _nextGridLineTime = now;
         _nextLoopOffset  = 0.0;
         SeekNoteIndexTo(targetEighths);
-        _melodicNoteIndex = 0;
-        _melodicEventIndex = 0;
+        SeekMelodicIndicesTo(targetEighths);
         _nextMelodicLoopOffset = 0.0;
         _melodicEnded     = _currentSong.MelodicTrack is null;
         _songEnded        = false;
@@ -404,14 +470,14 @@ public class CueEngine
             // Loop cleared: keep playing in place; just flush stale schedule.
             if (State == CueEngineState.Running)
             {
+                double pos = CurrentEighths;
                 _pendingCues.Clear();
                 _pendingGridLines.Clear();
                 _pendingMelodic.Clear();
                 _nextGridLineTime = DateTime.Now;
-                SeekNoteIndexTo(CurrentEighths);
+                SeekNoteIndexTo(pos);
+                SeekMelodicIndicesTo(pos);
                 _nextLoopOffset = 0.0;
-                _melodicNoteIndex = 0;
-                _melodicEventIndex = 0;
                 _nextMelodicLoopOffset = 0.0;
                 _melodicEnded = _currentSong.MelodicTrack is null;
             }
@@ -433,8 +499,10 @@ public class CueEngine
             {
                 _pendingCues.Clear();
                 _pendingMelodic.Clear();
-                // Note index walks forward from current position within the loop.
+                // Walk both indices forward from current position within the loop
+                // so the seed loops resume coherently from the same playhead.
                 SeekNoteIndexTo(pos);
+                SeekMelodicIndicesTo(pos);
             }
         }
     }

@@ -74,6 +74,10 @@ public partial class MainWindow : Window
                 SongStatusLabel.Text = "Finished";
             });
 
+        // Silence any backing-track notes still ringing across a loop wrap so
+        // the next iteration starts cleanly even if a NoteOff was missed.
+        _cueEngine.LoopWrapped += (_, _) => _music.Reset();
+
         var devices = _midi.GetInputDevices();
         DeviceCombo.ItemsSource = devices;
         if (devices.Count > 0)
