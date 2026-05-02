@@ -12,8 +12,8 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: Extract version
@@ -29,7 +29,7 @@ jobs:
       - name: Zip
         shell: pwsh
         run: Compress-Archive -Path out/Rimshot -DestinationPath Rimshot-windows-x64.zip
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Rimshot-windows-x64
           path: Rimshot-windows-x64.zip
@@ -38,8 +38,8 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: Extract version
@@ -54,7 +54,7 @@ jobs:
           chmod +x out/Rimshot/Rimshot
           chmod +x out/Rimshot/Inspector/Rimshot.Inspector
           tar -czvf Rimshot-linux-x64.tar.gz -C out Rimshot
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Rimshot-linux-x64
           path: Rimshot-linux-x64.tar.gz
@@ -63,8 +63,8 @@ jobs:
   build-macos:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: Extract version
@@ -74,7 +74,7 @@ jobs:
         run: ./.github/workflows/macos-bundle.sh osx-arm64 arm64 ${{ steps.version.outputs.version }} dist
       - name: Build x64 dmg
         run: ./.github/workflows/macos-bundle.sh osx-x64 x64 ${{ steps.version.outputs.version }} dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Rimshot-macos
           path: dist/*.dmg
@@ -84,10 +84,10 @@ jobs:
     needs: [build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           draft: true
           generate_release_notes: true
