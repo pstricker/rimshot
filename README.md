@@ -153,7 +153,21 @@ Pre-built packages for the [latest release](https://github.com/pstricker/rimshot
 
 Each package is self-contained — no .NET runtime install required. The Rimshot Inspector ships in the same package as a sub-folder.
 
-> These builds are unsigned. **macOS:** right-click the app → Open the first time to bypass Gatekeeper. **Windows:** SmartScreen → More info → Run anyway. Code signing is on the roadmap.
+### First-launch warnings
+
+These builds are not signed by an Apple/Microsoft developer certificate, so the OS will complain the first time you run them. The app is fine — proper code signing is on the roadmap.
+
+**macOS:** right-click `Rimshot.app` → **Open** → confirm at the dialog. macOS remembers your choice for next time. If you instead see *"Rimshot is damaged and can't be opened"* (some macOS versions are more aggressive), open Terminal and run:
+
+```bash
+xattr -cr /Applications/Rimshot.app
+```
+
+This clears the quarantine attribute that browsers add to downloaded files. Then double-click as normal.
+
+**Windows:** SmartScreen will say *"Windows protected your PC"* — click **More info** → **Run anyway**.
+
+**Linux:** no warning; just `chmod +x` if needed and run.
 
 ---
 

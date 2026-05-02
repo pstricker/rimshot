@@ -63,6 +63,13 @@ PLIST
 chmod +x "$MACOS_DIR/Rimshot"
 chmod +x "$MACOS_DIR/Inspector/Rimshot.Inspector"
 
+# Ad-hoc sign the bundle. Without this, the inner Rimshot binary is signed by
+# `dotnet publish` but the bundle has no _CodeSignature manifest — Gatekeeper
+# treats this mismatch as "damaged and can't be opened" with no UI bypass.
+# Ad-hoc signing produces an internally consistent bundle; macOS still warns
+# on first launch (no Apple Dev ID), but right-click → Open works.
+codesign --force --deep --sign - "$APP_DIR"
+
 DMG_PATH="$OUT_DIR/Rimshot-macos-$ARCH.dmg"
 rm -f "$DMG_PATH"
 
