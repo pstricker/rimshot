@@ -4,7 +4,7 @@
 
 ![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat-square)
 ![Avalonia](https://img.shields.io/badge/Avalonia-12-purple?style=flat-square)
-![Platform](https://img.shields.io/badge/platform-macOS-lightgrey?style=flat-square)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey?style=flat-square)
 
 ---
 
@@ -143,6 +143,7 @@ Useful for sanity-checking a MIDI before wondering why nothing's scrolling.
 ### Prerequisites
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8)
 - A USB MIDI drum kit *(optional — keyboard works fine)*
+- macOS, Windows, or Linux — Rimshot runs on all three. MIDI input uses CoreMIDI on macOS and WinMM on Windows; audio uses OpenAL Soft, which ships native binaries for every platform.
 
 ### Run It
 ```bash
