@@ -70,6 +70,12 @@ chmod +x "$MACOS_DIR/Inspector/Rimshot.Inspector"
 # on first launch (no Apple Dev ID), but right-click → Open works.
 codesign --force --deep --sign - "$APP_DIR"
 
+# Give the OS a moment to release file locks codesign placed on bundle
+# contents — without this hdiutil sometimes fails with "Resource busy" on
+# fast CI runners.
+sync
+sleep 2
+
 DMG_PATH="$OUT_DIR/Rimshot-macos-$ARCH.dmg"
 rm -f "$DMG_PATH"
 
