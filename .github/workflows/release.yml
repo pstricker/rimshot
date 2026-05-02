@@ -26,13 +26,17 @@ jobs:
       - name: Publish Inspector
         shell: bash
         run: dotnet publish Rimshot.Inspector/Rimshot.Inspector.csproj -c Release -r win-x64 --self-contained true -o out/Rimshot/Inspector -p:Version=${{ steps.version.outputs.version }}
-      - name: Zip
+      - name: Build installer
         shell: pwsh
-        run: Compress-Archive -Path out/Rimshot -DestinationPath Rimshot-windows-x64.zip
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+            /DMyVersion=${{ steps.version.outputs.version }} `
+            installer/Rimshot.iss
+          Move-Item installer/Rimshot-windows-x64.exe Rimshot-windows-x64.exe
       - uses: actions/upload-artifact@v7
         with:
           name: Rimshot-windows-x64
-          path: Rimshot-windows-x64.zip
+          path: Rimshot-windows-x64.exe
           if-no-files-found: error
 
   build-linux:
@@ -60,28 +64,8 @@ jobs:
           path: Rimshot-linux-x64.tar.gz
           if-no-files-found: error
 
-  build-macos:
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '8.0.x'
-      - name: Extract version
-        id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-      - name: Build arm64 dmg
-        run: ./.github/workflows/macos-bundle.sh osx-arm64 arm64 ${{ steps.version.outputs.version }} dist
-      - name: Build x64 dmg
-        run: ./.github/workflows/macos-bundle.sh osx-x64 x64 ${{ steps.version.outputs.version }} dist
-      - uses: actions/upload-artifact@v7
-        with:
-          name: Rimshot-macos
-          path: dist/*.dmg
-          if-no-files-found: error
-
   release:
-    needs: [build-windows, build-linux, build-macos]
+    needs: [build-windows, build-linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8
@@ -92,6 +76,5 @@ jobs:
           draft: true
           generate_release_notes: true
           files: |
-            artifacts/**/*.zip
+            artifacts/**/*.exe
             artifacts/**/*.tar.gz
-            artifacts/**/*.dmg

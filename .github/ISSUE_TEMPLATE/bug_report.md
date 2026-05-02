@@ -10,7 +10,7 @@ assignees: ''
 <!-- Shown in the title bar, e.g. "Rimshot 0.1.0" -->
 
 **Operating system**
-<!-- e.g. macOS 14.5 (Apple Silicon), Windows 11, Ubuntu 22.04 -->
+<!-- e.g. Windows 11, Ubuntu 22.04 -->
 
 **MIDI hardware (if relevant)**
 <!-- e.g. Roland TD-17, Alesis Nitro Mesh, or "keyboard only" -->
@@ -25,7 +25,6 @@ assignees: ''
 
 If you have one, paste the contents of `crash.log`:
 
-- macOS: `~/Library/Application Support/Rimshot/crash.log`
 - Windows: `%APPDATA%\Rimshot\crash.log`
 - Linux: `~/.config/Rimshot/crash.log`
 

@@ -4,7 +4,7 @@
 
 ![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat-square)
 ![Avalonia](https://img.shields.io/badge/Avalonia-12-purple?style=flat-square)
-![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey?style=flat-square)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey?style=flat-square)
 
 > ⚠️ **Early release (v0.x).** The core experience works, but expect rough edges and the occasional crash. Bug reports and feedback are very welcome — please open an [issue](https://github.com/pstricker/rimshot/issues).
 
@@ -146,28 +146,20 @@ Pre-built packages for the [latest release](https://github.com/pstricker/rimshot
 
 | Platform | Download |
 |----------|----------|
-| macOS (Apple Silicon) | [Rimshot-macos-arm64.dmg](https://github.com/pstricker/rimshot/releases/latest/download/Rimshot-macos-arm64.dmg) |
-| macOS (Intel) | [Rimshot-macos-x64.dmg](https://github.com/pstricker/rimshot/releases/latest/download/Rimshot-macos-x64.dmg) |
-| Windows (x64) | [Rimshot-windows-x64.zip](https://github.com/pstricker/rimshot/releases/latest/download/Rimshot-windows-x64.zip) |
+| Windows (x64) | [Rimshot-windows-x64.exe](https://github.com/pstricker/rimshot/releases/latest/download/Rimshot-windows-x64.exe) — installer |
 | Linux (x64) | [Rimshot-linux-x64.tar.gz](https://github.com/pstricker/rimshot/releases/latest/download/Rimshot-linux-x64.tar.gz) |
+
+> macOS users: support is coming once code signing + Apple notarization are wired up. Until then, build from source if you want to try it.
 
 Each package is self-contained — no .NET runtime install required. The Rimshot Inspector ships in the same package as a sub-folder.
 
 ### First-launch warnings
 
-These builds are not signed by an Apple/Microsoft developer certificate, so the OS will complain the first time you run them. The app is fine — proper code signing is on the roadmap.
+These builds aren't code-signed, so the OS will complain the first time you run them. The app is fine — proper code signing is on the roadmap.
 
-**macOS:** right-click `Rimshot.app` → **Open** → confirm at the dialog. macOS remembers your choice for next time. If you instead see *"Rimshot is damaged and can't be opened"* (some macOS versions are more aggressive), open Terminal and run:
+**Windows:** double-click `Rimshot-windows-x64.exe`. SmartScreen will say *"Windows protected your PC"* — click **More info** → **Run anyway**. The installer creates a Start Menu shortcut and registers an uninstaller in Add/Remove Programs.
 
-```bash
-xattr -cr /Applications/Rimshot.app
-```
-
-This clears the quarantine attribute that browsers add to downloaded files. Then double-click as normal.
-
-**Windows:** SmartScreen will say *"Windows protected your PC"* — click **More info** → **Run anyway**.
-
-**Linux:** no warning; just `chmod +x` if needed and run.
+**Linux:** extract the tarball and run `./Rimshot/Rimshot`. No signing warnings; `chmod +x` if needed.
 
 ---
 
@@ -178,7 +170,7 @@ This clears the quarantine attribute that browsers add to downloaded files. Then
 ### Prerequisites
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8)
 - A USB MIDI drum kit *(optional — keyboard works fine)*
-- macOS, Windows, or Linux — Rimshot runs on all three. MIDI input uses CoreMIDI on macOS and WinMM on Windows; audio uses OpenAL Soft, which ships native binaries for every platform.
+- Windows or Linux. (The code itself runs on macOS too, via Avalonia + CoreMIDI; binary releases for macOS are pending Apple Developer signing/notarization.)
 
 ### Run It
 ```bash
