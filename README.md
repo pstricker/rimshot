@@ -16,7 +16,7 @@
 
 ## What Is This?
 
-Rimshot is a drum trainer for your real electronic drum kit. Note cues scroll across the screen — your job is to hit the right drum at the right time. Connect your MIDI kit, crank the BPM, and get tight.
+Rimshot is a drum trainer for your real electronic drum kit. Note cues scroll across the screen toward the hit zone — your job is to hit the right drum at the right time. Connect your MIDI kit, crank the BPM, and get tight.
 
 No MIDI kit? No problem. Your keyboard works too.
 
@@ -25,7 +25,7 @@ No MIDI kit? No problem. Your keyboard works too.
 ## Features
 
 ### 🎯 Note Cues
-Notes scroll from right to left and must be hit as they cross the white hit-zone line. You've got a **±150ms window** — tight but fair. Land it on the metronome beat and you'll get a sick lime green ring. Miss the beat and you get the lane color. Miss entirely and you get to think about what you've done.
+Notes scroll from left to right and must be hit as they cross the white hit-zone line above the bass drum. You've got a **±150ms window** — tight but fair. Land it on the metronome beat and you'll get a sick lime green ring. Miss the beat and you get the lane color. Miss entirely and you get to think about what you've done.
 
 ### 🎼 Songs
 Pick a built-in pattern from the **SONG** dropdown and the engine loops it forever:
@@ -37,6 +37,11 @@ Pick a built-in pattern from the **SONG** dropdown and the engine loops it forev
 - **Paradiddle** — RLRR LRLL, the rudiment that paid for your kit
 
 Or pick **Load from file…** to drop in any `.mid` file. The lane strip auto-shrinks to show only the drums actually used by the current song — no point staring at a ride lane for a snare-only exercise.
+
+### 🔁 Practice Loop
+Above the cue view sits a mini timeline showing every note in the loaded song, laid out bar-by-bar. **Click and drag anywhere on it** to carve out a loop region — Rimshot will play just those bars on repeat until you nail them. Grab either edge to refine the range; the selection snaps to the 1/16 grid so your loop boundaries always land on a sensible beat.
+
+Hit **✕ CLEAR LOOP** in the toolbar to drop the selection and play the whole song again. Auto Play and the backing track both respect the loop bounds, so you can woodshed a single fill without the rest of the song getting in the way.
 
 ### 🤖 Auto Play
 Flip the **AUTO PLAY** checkbox and Rimshot plays the song for you — perfect cues, perfect timing, perfect ego death. Great for hearing what a pattern *should* sound like before you embarrass yourself trying it.
@@ -123,6 +128,9 @@ Special routing:
 
 ### 🎸 Startup Rimshot
 Every time the app opens, it plays `rimshot.wav`. Because of course it does.
+
+### ℹ️ About
+**ABOUT** in the header opens a dialog with the current version, a link to the GitHub repo, a one-click bug-report shortcut, and the MIT license.
 
 ---
 
@@ -212,7 +220,9 @@ Rimshot.sln
 │   │   └── WavLoader.cs              — 16/24-bit PCM WAV parser
 │   ├── Views/
 │   │   ├── CueView                   — main 60fps canvas (notes, pads, rings)
-│   │   └── TempoView                 — BPM + metronome subdivision UI
+│   │   ├── SongTimelineView          — bar-by-bar strip, drag-to-loop region
+│   │   ├── TempoView                 — BPM + metronome subdivision UI
+│   │   └── AboutWindow               — version + repo / bug-report / license dialog
 │   ├── MainWindow                    — toolbar, song picker, tabs, transport
 │   └── Sounds/                       — WAV samples (hh, sn, bd, cr, rd, toms...)
 │       └── soundfonts/               — drop a .sf2 here to enable BACKING TRACK
@@ -226,6 +236,7 @@ Rimshot.sln
 │   │   ├── PatternNote.cs            — note within a song
 │   │   └── Song.cs                   — song record (notes + length + loop flag)
 │   ├── Services/
+│   │   ├── LoopSelectionService.cs   — practice-loop range, snapped to 1/16 grid
 │   │   ├── MidiAnalysis.cs           — MIDI file inspection (used by Inspector)
 │   │   └── SongLoader.cs             — .mid → Song conversion
 │   ├── DrumMap.cs                    — GM drum note name lookup
