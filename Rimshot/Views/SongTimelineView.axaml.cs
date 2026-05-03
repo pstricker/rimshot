@@ -108,6 +108,7 @@ public partial class SongTimelineView : UserControl
         _animTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
         _animTimer.Tick += OnAnimTick;
         _animTimer.Start();
+        UpdateClearLoopVisibility();
         Rebuild();
     }
 
@@ -153,8 +154,18 @@ public partial class SongTimelineView : UserControl
                 _overlayFadingIn  = false;
                 _overlayFadeStart = DateTime.Now;
             }
+            UpdateClearLoopVisibility();
             Rebuild();
         });
+
+    private void UpdateClearLoopVisibility()
+    {
+        if (ClearLoopButton is null) return;
+        ClearLoopButton.IsVisible = Loop?.IsActive == true;
+    }
+
+    private void OnClearLoopClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
+        Loop?.ClearLoop();
 
     // ── Layout / rebuild ─────────────────────────────────────────────────────
     private void Rebuild()

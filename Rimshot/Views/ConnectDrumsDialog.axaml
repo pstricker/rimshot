@@ -1,0 +1,74 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Rimshot.Views.ConnectDrumsDialog"
+        Title="Connect Drums"
+        Width="460" Height="300"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#0A0A0A">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="24,20,24,20">
+
+        <TextBlock Grid.Row="0"
+                   Text="CONNECT DRUMS"
+                   FontFamily="{StaticResource BebasNeue}"
+                   FontSize="32"
+                   Foreground="#FFD700"
+                   HorizontalAlignment="Center"/>
+
+        <TextBlock Grid.Row="1"
+                   Text="Pick a MIDI input device for your kit"
+                   FontSize="13"
+                   Foreground="#888888"
+                   HorizontalAlignment="Center"
+                   Margin="0,2,0,16"/>
+
+        <StackPanel Grid.Row="2" Spacing="10" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <ComboBox x:Name="DeviceCombo"
+                          PlaceholderText="Select device…"
+                          MinWidth="280"
+                          MinHeight="30"/>
+                <Button Content="↻"
+                        Click="OnRefreshClicked"
+                        ToolTip.Tip="Refresh device list"
+                        Background="Transparent"
+                        BorderBrush="#444444"
+                        BorderThickness="1"
+                        Foreground="#888888"
+                        Width="36" MinHeight="30"
+                        Padding="0"
+                        FontSize="14"/>
+            </StackPanel>
+
+            <Button x:Name="ConnectButton"
+                    Content="CONNECT"
+                    Click="OnConnectClicked"
+                    HorizontalAlignment="Left"
+                    HorizontalContentAlignment="Center"
+                    Width="140"
+                    Background="Transparent"
+                    BorderBrush="#FFD700"
+                    BorderThickness="1"
+                    Foreground="#FFD700"
+                    Padding="10,5"/>
+
+            <TextBlock x:Name="StatusLabel"
+                       Text="Not connected"
+                       FontSize="12"
+                       Foreground="#888888"
+                       TextWrapping="Wrap"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <Button Grid.Row="3"
+                Content="CLOSE"
+                Click="OnCloseClicked"
+                HorizontalAlignment="Right"
+                Background="Transparent"
+                BorderBrush="#444444"
+                BorderThickness="1"
+                Foreground="#888888"
+                Padding="14,5"/>
+    </Grid>
+</Window>

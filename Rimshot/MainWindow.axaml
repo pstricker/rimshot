@@ -10,152 +10,235 @@
 
     <DockPanel>
 
-        <!-- RIMSHOT Header Bar -->
+        <!-- ============================================================
+             HEADER BAR
+             RIMSHOT wordmark on the left, transport island centered,
+             drum-connection state + ABOUT on the right.
+             ============================================================ -->
         <Border DockPanel.Dock="Top"
                 Background="#141414"
                 BorderBrush="#FFD700"
                 BorderThickness="0,0,0,2"
-                Padding="14,10">
-            <Grid ColumnDefinitions="Auto,*,Auto">
+                Padding="14,8,14,8">
+            <Grid ColumnDefinitions="Auto,*,Auto,*,Auto,Auto">
+
                 <TextBlock Grid.Column="0"
                            Text="RIMSHOT"
                            FontFamily="{StaticResource BebasNeue}"
-                           FontSize="42"
+                           FontSize="32"
                            Foreground="#FFD700"
                            VerticalAlignment="Center"/>
-                <Button Grid.Column="2"
+
+                <!-- CENTER: Transport island (PLAY emphasized as primary).
+                     Lives in the header so the toolbar below has room to
+                     breathe for SONG controls and the TEMPO widget. -->
+                <Border Grid.Column="2"
+                        Background="#0A0A0A"
+                        BorderBrush="#2A2A2A"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="6,4"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6"
+                                VerticalAlignment="Center">
+                        <Button x:Name="PlayButton"
+                                Content="▶  PLAY"
+                                Click="OnPlayClicked"
+                                Background="#FFD700"
+                                BorderBrush="#FFD700"
+                                BorderThickness="1"
+                                Foreground="#0A0A0A"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Padding="14,4"/>
+                        <Button x:Name="PauseButton"
+                                Content="⏸"
+                                ToolTip.Tip="Pause"
+                                Click="OnPauseClicked"
+                                IsEnabled="False"
+                                Background="Transparent"
+                                BorderBrush="#444444"
+                                BorderThickness="1"
+                                Foreground="#888888"
+                                FontSize="13"
+                                Padding="9,4"/>
+                        <Button x:Name="StopButton"
+                                Content="■"
+                                ToolTip.Tip="Stop"
+                                Click="OnStopClicked"
+                                IsEnabled="False"
+                                Background="Transparent"
+                                BorderBrush="#444444"
+                                BorderThickness="1"
+                                Foreground="#888888"
+                                FontSize="13"
+                                Padding="9,4"/>
+                        <Button x:Name="RestartButton"
+                                Content="↺"
+                                ToolTip.Tip="Restart from beginning"
+                                Click="OnRestartClicked"
+                                Background="Transparent"
+                                BorderBrush="#444444"
+                                BorderThickness="1"
+                                Foreground="#CCCCCC"
+                                FontSize="13"
+                                Padding="9,4"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Disconnected state: prominent CONNECT DRUMS button -->
+                <Button Grid.Column="4"
+                        x:Name="ConnectDrumsButton"
+                        Content="CONNECT DRUMS"
+                        Click="OnConnectDrumsClicked"
+                        VerticalAlignment="Center"
+                        Background="Transparent"
+                        BorderBrush="#FFD700"
+                        BorderThickness="1"
+                        Foreground="#FFD700"
+                        FontSize="12"
+                        Padding="12,5"
+                        Margin="0,0,8,0"/>
+
+                <!-- Connected state: green pill + device name + edit icon -->
+                <Border Grid.Column="4"
+                        x:Name="ConnectedDrumsBadge"
+                        IsVisible="False"
+                        VerticalAlignment="Center"
+                        Background="#0A1A0A"
+                        BorderBrush="#4CAF50"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="10,4,4,4"
+                        Margin="0,0,8,0">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Ellipse Width="8" Height="8"
+                                 Fill="#4CAF50"
+                                 VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ConnectedDeviceLabel"
+                                   Text=""
+                                   FontSize="12"
+                                   Foreground="#4CAF50"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="200"/>
+                        <Button Content="✎"
+                                Click="OnConnectDrumsClicked"
+                                ToolTip.Tip="Change drum device"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="0"
+                                Foreground="#4CAF50"
+                                Width="22" Height="22"
+                                Padding="0"
+                                FontSize="13"/>
+                    </StackPanel>
+                </Border>
+
+                <Button Grid.Column="5"
                         Content="ABOUT"
                         Click="OnAboutClicked"
                         VerticalAlignment="Center"
                         Background="Transparent"
                         BorderBrush="#444444"
                         BorderThickness="1"
-                        Foreground="#888888"/>
+                        Foreground="#888888"
+                        FontSize="11"
+                        Padding="10,5"/>
             </Grid>
         </Border>
 
-        <!-- Toolbar -->
+        <!-- ============================================================
+             PRIMARY TOOLBAR
+             SONG selector + practice toggles on the left, TEMPO widget
+             on the right. Transport now lives in the header above.
+             ============================================================ -->
         <Border DockPanel.Dock="Top"
                 Background="#141414"
+                BorderBrush="#FFD700"
+                BorderThickness="0,1,0,1"
                 Padding="12,8,12,8"
                 Margin="0,0,0,2">
             <Grid ColumnDefinitions="Auto,*,Auto">
 
-                <!-- Left: MIDI device -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <ComboBox x:Name="DeviceCombo"
-                              PlaceholderText="Select MIDI device…"
-                              MinWidth="170" />
-                    <Button x:Name="ConnectButton"
-                            Content="CONNECT"
-                            Click="OnConnectClicked"
-                            Background="Transparent"
-                            BorderBrush="#FFD700"
-                            BorderThickness="1"
-                            Foreground="White"/>
-                    <Button Content="REFRESH"
-                            Click="OnRefreshClicked"
-                            Background="Transparent"
-                            BorderBrush="#444444"
-                            BorderThickness="1"
-                            Foreground="#888888"/>
-                    <TextBlock x:Name="StatusLabel"
-                               VerticalAlignment="Center"
-                               Text="Not connected"
-                               Foreground="#888888"
-                               FontSize="12"
-                               Margin="6,0,0,0"/>
+                <!-- LEFT: SONG + practice toggles -->
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Left">
+                    <TextBlock Text="SONG"
+                               FontFamily="{StaticResource BebasNeue}"
+                               FontSize="13"
+                               Foreground="#FFD700"
+                               VerticalAlignment="Center"/>
+                    <ComboBox x:Name="SongCombo"
+                              MinWidth="160"
+                              MaxWidth="260"
+                              SelectionChanged="OnSongSelectionChanged"/>
+                    <CheckBox x:Name="AutoPlayCheck"
+                              Content="AUTO PLAY"
+                              ToolTip.Tip="Auto-play hits in time with the cues"
+                              VerticalAlignment="Center"
+                              Foreground="#FFD700"
+                              FontSize="11"
+                              Margin="8,0,0,0"
+                              IsCheckedChanged="OnAutoPlayChanged"/>
+                    <CheckBox x:Name="BackingTrackCheck"
+                              Content="BACKING TRACK"
+                              ToolTip.Tip="Play the song's backing track audio"
+                              IsVisible="False"
+                              VerticalAlignment="Center"
+                              Foreground="#FFD700"
+                              FontSize="11"
+                              Margin="4,0,0,0"
+                              IsCheckedChanged="OnBackingTrackChanged"/>
                 </StackPanel>
 
-                <!-- Center: Transport -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
-                            HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Button x:Name="PlayButton"
-                            Content="▶ PLAY"
-                            Click="OnPlayClicked"
-                            Background="Transparent"
+                <!-- RIGHT: TEMPO widget + song status -->
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            Spacing="10"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Right">
+                    <TextBlock x:Name="SongStatusLabel"
+                               VerticalAlignment="Center"
+                               Foreground="#666666"
+                               FontSize="11"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="200"/>
+                    <Border Background="#0A0A0A"
                             BorderBrush="#FFD700"
                             BorderThickness="1"
-                            Foreground="#FFD700"
-                            Padding="14,6"/>
-                    <Button x:Name="PauseButton"
-                            Content="⏸ PAUSE"
-                            Click="OnPauseClicked"
-                            IsEnabled="False"
-                            Background="Transparent"
-                            BorderBrush="#444444"
-                            BorderThickness="1"
-                            Foreground="#888888"
-                            Padding="14,6"/>
-                    <Button x:Name="RestartButton"
-                            Content="↺ RESTART"
-                            Click="OnRestartClicked"
-                            Background="Transparent"
-                            BorderBrush="#444444"
-                            BorderThickness="1"
-                            Foreground="#888888"
-                            Padding="14,6"/>
-                    <Button x:Name="ClearLoopButton"
-                            Content="✕ CLEAR LOOP"
-                            Click="OnClearLoopClicked"
-                            IsEnabled="False"
-                            Background="Transparent"
-                            BorderBrush="#FF1493"
-                            BorderThickness="1"
-                            Foreground="#888888"
-                            Padding="14,6"
-                            ToolTip.Tip="Remove the practice loop and play the entire song"/>
-                </StackPanel>
-
-                <!-- Right: BPM -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <TextBlock Text="BPM"
-                               VerticalAlignment="Center"
-                               Foreground="#888888"/>
-                    <NumericUpDown x:Name="BpmControl"
-                                   Value="90" Minimum="40" Maximum="200" Increment="5"
-                                   Width="120"
-                                   Foreground="#FFD700"
-                                   ValueChanged="OnBpmChanged"/>
+                            CornerRadius="4"
+                            Padding="10,2,6,2">
+                        <StackPanel Orientation="Horizontal" Spacing="8"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="TEMPO"
+                                       FontFamily="{StaticResource BebasNeue}"
+                                       FontSize="11"
+                                       Foreground="#888888"
+                                       VerticalAlignment="Center"/>
+                            <NumericUpDown x:Name="BpmControl"
+                                           Value="90" Minimum="40" Maximum="200" Increment="5"
+                                           Width="120"
+                                           MinHeight="26"
+                                           Foreground="#FFD700"
+                                           FontSize="14"
+                                           BorderThickness="0"
+                                           Background="Transparent"
+                                           ValueChanged="OnBpmChanged"/>
+                            <TextBlock Text="BPM"
+                                       FontFamily="{StaticResource BebasNeue}"
+                                       FontSize="10"
+                                       Foreground="#FFD700"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,2,0"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
             </Grid>
-        </Border>
-
-        <!-- Song Selection Row -->
-        <Border DockPanel.Dock="Top"
-                Background="#141414"
-                Padding="12,6,12,6"
-                Margin="0,0,0,2">
-            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <TextBlock Text="SONG"
-                           VerticalAlignment="Center"
-                           Foreground="#888888"
-                           FontSize="12"/>
-                <ComboBox x:Name="SongCombo"
-                          MinWidth="220"
-                          SelectionChanged="OnSongSelectionChanged"/>
-                <CheckBox x:Name="AutoPlayCheck"
-                          Content="AUTO PLAY"
-                          VerticalAlignment="Center"
-                          Foreground="#FFD700"
-                          FontSize="12"
-                          Margin="12,0,0,0"
-                          IsCheckedChanged="OnAutoPlayChanged"/>
-                <CheckBox x:Name="BackingTrackCheck"
-                          Content="BACKING TRACK"
-                          IsVisible="False"
-                          VerticalAlignment="Center"
-                          Foreground="#FFD700"
-                          FontSize="12"
-                          Margin="12,0,0,0"
-                          IsCheckedChanged="OnBackingTrackChanged"/>
-                <TextBlock x:Name="SongStatusLabel"
-                           VerticalAlignment="Center"
-                           Foreground="#888888"
-                           FontSize="11"
-                           Margin="6,0,0,0"/>
-            </StackPanel>
         </Border>
 
         <!-- Song Timeline (loop selection) -->
