@@ -22,7 +22,7 @@ public static class SongLibrary
                 new(6.0, 0), new(6.0, 2),               // beat 4: HH + SN
                 new(7.0, 0),                             // & 4: HH
             ],
-            TotalEighths: 8.0, ShouldLoop: true),
+            TotalEighths: 8.0, ShouldLoop: true, IntroEighths: 8.0),
 
         new Song("Single Stroke Roll",
             Notes:
@@ -30,7 +30,7 @@ public static class SongLibrary
                 new(0.0, 2), new(0.5, 2), new(1.0, 2), new(1.5, 2),
                 new(2.0, 2), new(2.5, 2), new(3.0, 2), new(3.5, 2),
             ],
-            TotalEighths: 8.0, ShouldLoop: true),
+            TotalEighths: 8.0, ShouldLoop: true, IntroEighths: 8.0),
 
         new Song("Double Stroke Roll",
             Notes:
@@ -44,7 +44,7 @@ public static class SongLibrary
                 new(6.0, 2), new(6.25, 2),
                 new(7.0, 2), new(7.25, 2),
             ],
-            TotalEighths: 8.0, ShouldLoop: true),
+            TotalEighths: 8.0, ShouldLoop: true, IntroEighths: 8.0),
 
         // RLRR LRLL — accented hits on TM1, unaccented on SN
         new Song("Paradiddle",
@@ -67,7 +67,7 @@ public static class SongLibrary
                 new(7.0, 2),  // L (accent)
                 new(7.5, 2),  // L
             ],
-            TotalEighths: 8.0, ShouldLoop: true),
+            TotalEighths: 8.0, ShouldLoop: true, IntroEighths: 8.0),
 
         new Song("4-on-the-Floor",
             Notes:
@@ -81,7 +81,7 @@ public static class SongLibrary
                 new(6.0, 0), new(6.0, 2), new(6.0, 5), // HH + SN + BD
                 new(7.0, 0),                             // HH
             ],
-            TotalEighths: 8.0, ShouldLoop: true),
+            TotalEighths: 8.0, ShouldLoop: true, IntroEighths: 8.0),
     ];
 
     public static IReadOnlyList<Song> AllItems => [..BuiltIn, LoadFromFile];

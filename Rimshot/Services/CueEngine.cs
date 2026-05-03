@@ -131,8 +131,13 @@ public class CueEngine
     public void Restart()
     {
         var now = DateTime.Now;
-        _nextGridLineTime = now;
-        SongStartTime     = now;
+        // Shift the song-start anchor forward by the intro duration so the
+        // first iteration begins after a silent count-in. Subsequent loop
+        // iterations don't get the intro because _nextLoopOffset advances
+        // by TotalEighths only.
+        var introOffset = TimeSpan.FromMilliseconds(_currentSong.IntroEighths * EighthNoteMs);
+        _nextGridLineTime = now + introOffset;
+        SongStartTime     = now + introOffset;
         _noteIndex        = 0;
         _nextLoopOffset   = 0.0;
         _songEnded        = false;

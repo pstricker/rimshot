@@ -22,7 +22,6 @@ public unsafe class MusicService : IDisposable
     private const int RenderSleepMs = 5;
 
     private readonly AudioService _audio;
-    private readonly string? _soundFontPath;
 
     private Synthesizer? _synth;
     private uint _source;
@@ -38,20 +37,15 @@ public unsafe class MusicService : IDisposable
 
     public bool IsAvailable => _isAvailable;
 
-    // Fires once when the soundfont finishes loading and the synth becomes
-    // playable. Used by UI code to re-evaluate features that depend on
-    // backing-track support after the async init completes.
-    public event EventHandler? AvailableChanged;
-
     public MusicService(AudioService audio)
     {
         _audio = audio;
-        _soundFontPath = FindSoundFont();
-        if (_soundFontPath is null) return;
+        var path = FindSoundFont();
+        if (path is null) return;
 
         // Load synth + start streaming on a background thread so a 25 MB
         // soundfont parse doesn't block the UI thread at startup.
-        _ = Task.Run(InitializeAsync);
+        _ = LoadSoundFontAsync(path);
     }
 
     private static string? FindSoundFont()
@@ -62,46 +56,85 @@ public unsafe class MusicService : IDisposable
         return files.Length > 0 ? files[0] : null;
     }
 
-    private void InitializeAsync()
-    {
-        try
+    /// <summary>
+    /// Loads (or replaces) the active soundfont. Safe to call from any thread;
+    /// the parse + OpenAL setup runs synchronously on the calling thread, so
+    /// callers should invoke via Task.Run when invoked from the UI thread.
+    /// Returns true on success.
+    /// </summary>
+    public Task<bool> LoadSoundFontAsync(string path) =>
+        Task.Run(() =>
         {
-            _synth = new Synthesizer(_soundFontPath!, SampleRate);
-            if (!_audio.IsInitialized || _audio.Al is null) return;
-
-            var al = _audio.Al;
-            _source  = _audio.CreateStreamingSource();
-            _buffers = new uint[BufferCount];
-
-            short[] silence = new short[FramesPerBuf * 2];
-            for (int i = 0; i < BufferCount; i++)
+            try
             {
-                _buffers[i] = al.GenBuffer();
-                fixed (short* ptr = silence)
-                    al.BufferData(_buffers[i], BufferFormat.Stereo16,
-                        ptr, silence.Length * sizeof(short), SampleRate);
-                fixed (uint* bptr = &_buffers[i])
-                    al.SourceQueueBuffers(_source, 1, bptr);
+                if (_isAvailable) TeardownSynth();
+
+                _synth = new Synthesizer(path, SampleRate);
+                if (!_audio.IsInitialized || _audio.Al is null) return false;
+
+                var al = _audio.Al;
+                _source  = _audio.CreateStreamingSource();
+                _buffers = new uint[BufferCount];
+
+                short[] silence = new short[FramesPerBuf * 2];
+                for (int i = 0; i < BufferCount; i++)
+                {
+                    _buffers[i] = al.GenBuffer();
+                    fixed (short* ptr = silence)
+                        al.BufferData(_buffers[i], BufferFormat.Stereo16,
+                            ptr, silence.Length * sizeof(short), SampleRate);
+                    fixed (uint* bptr = &_buffers[i])
+                        al.SourceQueueBuffers(_source, 1, bptr);
+                }
+                al.SetSourceProperty(_source, SourceFloat.Gain, 1.0f);
+                al.SourcePlay(_source);
+
+                _running = true;
+                _renderThread = new Thread(RenderLoop)
+                {
+                    IsBackground = true,
+                    Priority = ThreadPriority.AboveNormal,
+                    Name = "MusicService-Render",
+                };
+                _renderThread.Start();
+
+                _isAvailable = true;
+                return true;
             }
-            al.SetSourceProperty(_source, SourceFloat.Gain, 1.0f);
-            al.SourcePlay(_source);
-
-            _running = true;
-            _renderThread = new Thread(RenderLoop)
+            catch
             {
-                IsBackground = true,
-                Priority = ThreadPriority.AboveNormal,
-                Name = "MusicService-Render",
-            };
-            _renderThread.Start();
+                _isAvailable = false;
+                _synth = null;
+                return false;
+            }
+        });
 
-            _isAvailable = true;
-            AvailableChanged?.Invoke(this, EventArgs.Empty);
-        }
-        catch
+    private void TeardownSynth()
+    {
+        _running = false;
+        _renderThread?.Join(TimeSpan.FromMilliseconds(500));
+        _renderThread = null;
+
+        var al = _audio.Al;
+        if (al is not null && _source != 0)
         {
-            // Soundfont load or OpenAL setup failed — leave IsAvailable false.
+            try
+            {
+                al.SourceStop(_source);
+                al.DeleteSource(_source);
+                foreach (uint b in _buffers)
+                    al.DeleteBuffer(b);
+            }
+            catch
+            {
+                // OpenAL context may already be torn down — best effort.
+            }
         }
+        _source = 0;
+        _buffers = Array.Empty<uint>();
+        _synth = null;
+        _isAvailable = false;
+        while (_inbox.TryDequeue(out _)) { }
     }
 
     public void Schedule(DateTime at, int channel, byte command, byte data1, byte data2)
@@ -221,28 +254,7 @@ public unsafe class MusicService : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        _running = false;
-        _renderThread?.Join(TimeSpan.FromMilliseconds(500));
-
-        var al = _audio.Al;
-        if (al is not null && _source != 0)
-        {
-            try
-            {
-                al.SourceStop(_source);
-                al.DeleteSource(_source);
-                foreach (uint b in _buffers)
-                    al.DeleteBuffer(b);
-            }
-            catch
-            {
-                // OpenAL context may already be torn down — best effort.
-            }
-        }
-        _synth = null;
-    }
+    public void Dispose() => TeardownSynth();
 
     private readonly record struct TimedMidiMessage(
         DateTime ScheduledAt,
