@@ -54,9 +54,10 @@ public partial class MainWindow : Window
             });
 
         // Initialize loop service with the engine's default song length.
+        // CLEAR LOOP visibility is now handled by SongTimelineView itself
+        // (the ✕ button is rendered inline with the timeline strip), so
+        // MainWindow no longer subscribes to LoopChanged for that purpose.
         _loopSelection.SetSongLength(_cueEngine.CurrentSong.TotalEighths);
-        _loopSelection.LoopChanged += (_, _) =>
-            Dispatcher.UIThread.InvokeAsync(UpdateClearLoopButton);
 
         AddHandler(KeyDownEvent, OnKeyDownTunnel, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         AddHandler(KeyUpEvent, OnKeyUpTunnel, Avalonia.Interactivity.RoutingStrategies.Tunnel);
@@ -256,17 +257,6 @@ public partial class MainWindow : Window
 
     private void OnClearClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
         _hits.Clear();
-
-    private void OnClearLoopClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
-        _loopSelection.ClearLoop();
-
-    private void UpdateClearLoopButton()
-    {
-        ClearLoopButton.IsEnabled = _loopSelection.IsActive;
-        ClearLoopButton.Foreground = _loopSelection.IsActive
-            ? Avalonia.Media.Brushes.HotPink
-            : Avalonia.Media.Brushes.Gray;
-    }
 
     private void OnAutoPlayChanged(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {

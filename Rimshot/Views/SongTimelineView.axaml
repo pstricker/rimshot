@@ -15,6 +15,24 @@
                         Height="100"
                         ClipToBounds="True"/>
             </ScrollViewer>
+
+            <!-- Inline CLEAR LOOP affordance: only visible when a loop is set.
+                 Anchored to the timeline's top-right corner so it's discoverable
+                 without crowding the main toolbar. -->
+            <Button x:Name="ClearLoopButton"
+                    Content="✕  CLEAR LOOP"
+                    Click="OnClearLoopClicked"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="0,6,8,0"
+                    Padding="8,2"
+                    FontSize="11"
+                    Background="#1A0E14"
+                    BorderBrush="#FF1493"
+                    BorderThickness="1"
+                    Foreground="#FF1493"
+                    IsVisible="False"
+                    ToolTip.Tip="Remove the practice loop and play the entire song"/>
         </Grid>
     </Border>
 </UserControl>
