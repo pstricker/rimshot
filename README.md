@@ -27,18 +27,22 @@ No MIDI kit? No problem. Your keyboard works too.
 ### 🎯 Note Cues
 Notes scroll from right to left and must be hit as they cross the white hit-zone line above the bass drum. You've got a **±150ms window** — tight but fair. Land it on the metronome beat and you'll get a sick lime green ring. Miss the beat and you get the lane color. Miss entirely and you get to think about what you've done.
 
-### 🎼 Songs
-Pick a built-in pattern from the **SONG** dropdown and the engine loops it forever:
+When you're practicing a rudiment, each cue carries its sticking. A small **L** or **R** floats above the rectangle so you can see which hand to use, and **left-hand strokes are tinted slightly darker** than right-hand strokes — alternation reads at a glance even before you start counting.
 
-- **Rock Beat** — your bread and butter
-- **4-on-the-Floor** — kick on every quarter
-- **Single Stroke Roll** — RLRLRLRL on the snare
-- **Double Stroke Roll** — RRLLRRLL
-- **Paradiddle** — RLRR LRLL, the rudiment that paid for your kit
+### 🎼 Library
+Hit the **Library** button in the toolbar — it opens a full-screen view with two sections in the left nav:
 
-Or pick **Load from file…** to drop in any `.mid` file. The lane strip auto-shrinks to show only the drums actually used by the current song — no point staring at a ride lane for a snare-only exercise.
+**My Library** — drop in any `.mid` file via **+ ADD MIDI…**. The file is copied into Rimshot's app data folder, so it survives restarts and you only have to browse for it once. Try to add the same file twice and Rimshot prompts before overwriting. Hit **REMOVE** on a row to drop both the entry and its stored copy.
 
-Built-in patterns lead with a **one-bar silent intro** before the first note appears, so you have a beat to settle in instead of getting clobbered the instant you hit PLAY. Loaded `.mid` files start immediately — they have their own pacing.
+**Built-In** — the bundled catalog. All **40 PAS rudiments** are in there, grouped by official category, plus a couple of grooves to keep things musical:
+
+- **Roll Rudiments** (15) — single, double, multiple bounce, triple stroke, plus 5/6/7/9/10/11/13/15/17-stroke rolls
+- **Diddle Rudiments** (4) — single, double, triple paradiddle, single paradiddle-diddle
+- **Flam Rudiments** (11) — flam, flam tap, flamacue, flam paradiddle, pataflafla, swiss army triplet, and the rest
+- **Drag Rudiments** (10) — drag, single/double drag tap, lesson 25, dragadiddle, drag paradiddles, ratamacues
+- **Grooves** — Rock Beat, 4-on-the-Floor
+
+The lane strip auto-shrinks to show only the drums actually used by the current song — no point staring at a ride lane for a snare-only exercise. Built-in patterns lead with a **one-bar silent intro** before the first note appears, so you have a beat to settle in instead of getting clobbered the instant you hit PLAY. Loaded `.mid` files start immediately — they have their own pacing.
 
 ### 🔁 Practice Loop
 Above the cue view sits a mini timeline showing every note in the loaded song, laid out bar-by-bar. **Click and drag anywhere on it** to carve out a loop region — Rimshot will play just those bars on repeat until you nail them. Grab either edge to refine the range; the selection snaps to the 1/16 grid so your loop boundaries always land on a sensible beat.
@@ -214,7 +218,7 @@ dotnet run --project Rimshot.Inspector/Rimshot.Inspector.csproj
 1. Plug in your MIDI drum kit
 2. Click **CONNECT DRUMS** in the header bar
 3. Pick your kit from the dialog and hit CONNECT
-4. Pick a song from the **SONG** dropdown
+4. Click **Library** in the toolbar and pick a rudiment, a groove, or one of your imported MIDI files
 5. Hit **▶ PLAY** — use **⏸ PAUSE** to hold, **■ STOP** to reset back to bar 1, or **↺ RESTART** to jump to the song's start without leaving Running state
 6. Start drumming
 
@@ -234,16 +238,19 @@ Rimshot.sln
 │   │   ├── MetronomeService.cs       — beat tracking and subdivision
 │   │   ├── MidiService.cs            — MIDI device I/O (DryWetMidi)
 │   │   ├── MusicService.cs           — backing-track synthesizer (MeltySynth)
-│   │   ├── SongLibrary.cs            — built-in pattern catalog
+│   │   ├── RudimentBuilder.cs        — sticking string → Song (handles flams + drags)
+│   │   ├── SongLibrary.cs            — built-in catalog (40 PAS rudiments + grooves)
 │   │   └── WavLoader.cs              — 16/24-bit PCM WAV parser
 │   ├── Views/
-│   │   ├── CueView                   — main 60fps canvas (notes, pads, rings)
+│   │   ├── CueView                   — main 60fps canvas (notes, pads, rings, L/R labels)
+│   │   ├── LibraryView               — full-screen song picker (My Library + Built-In)
 │   │   ├── SongTimelineView          — bar-by-bar strip, drag-to-loop region
 │   │   ├── TempoView                 — BPM + metronome subdivision UI
 │   │   ├── ConnectDrumsDialog        — MIDI device picker (modal)
+│   │   ├── DuplicateMidiDialog       — overwrite-confirm prompt for re-imported MIDI
 │   │   ├── SoundFontPromptWindow     — first-run .sf2 setup prompt
 │   │   └── AboutWindow               — version + repo / bug-report / license dialog
-│   ├── MainWindow                    — toolbar, song picker, tabs, transport
+│   ├── MainWindow                    — toolbar, library button, tabs, transport
 │   └── Sounds/                       — WAV samples (hh, sn, bd, cr, rd, toms...)
 │       └── soundfonts/               — drop a .sf2 here to enable BACKING TRACK
 │
@@ -251,13 +258,16 @@ Rimshot.sln
 │   ├── Models/
 │   │   ├── DrumLane.cs               — lane definitions, MIDI notes, colors
 │   │   ├── DrumHit.cs                — hit event record
-│   │   ├── FallingCue.cs             — scheduled note cue
+│   │   ├── FallingCue.cs             — scheduled note cue (carries optional Hand)
+│   │   ├── Hand.cs                   — Left/Right enum for sticking metadata
 │   │   ├── MelodicTrack.cs           — non-drum notes + program/CC/pitch-bend events
-│   │   ├── PatternNote.cs            — note within a song
+│   │   ├── MidiLibraryEntry.cs       — persisted record for an imported MIDI file
+│   │   ├── PatternNote.cs            — note within a song (carries optional Hand)
 │   │   └── Song.cs                   — song record (notes + length + loop flag)
 │   ├── Services/
 │   │   ├── LoopSelectionService.cs   — practice-loop range, snapped to 1/16 grid
 │   │   ├── MidiAnalysis.cs           — MIDI file inspection (used by Inspector)
+│   │   ├── MidiLibraryService.cs     — persistent MIDI library (copy + JSON manifest)
 │   │   └── SongLoader.cs             — .mid → Song conversion
 │   ├── DrumMap.cs                    — GM drum note name lookup
 │   └── Assets/
