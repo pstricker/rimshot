@@ -25,7 +25,7 @@ No MIDI kit? No problem. Your keyboard works too.
 ## Features
 
 ### 🎯 Note Cues
-Notes scroll from left to right and must be hit as they cross the white hit-zone line above the bass drum. You've got a **±150ms window** — tight but fair. Land it on the metronome beat and you'll get a sick lime green ring. Miss the beat and you get the lane color. Miss entirely and you get to think about what you've done.
+Notes scroll from right to left and must be hit as they cross the white hit-zone line above the bass drum. You've got a **±150ms window** — tight but fair. Land it on the metronome beat and you'll get a sick lime green ring. Miss the beat and you get the lane color. Miss entirely and you get to think about what you've done.
 
 ### 🎼 Songs
 Pick a built-in pattern from the **SONG** dropdown and the engine loops it forever:
@@ -38,10 +38,12 @@ Pick a built-in pattern from the **SONG** dropdown and the engine loops it forev
 
 Or pick **Load from file…** to drop in any `.mid` file. The lane strip auto-shrinks to show only the drums actually used by the current song — no point staring at a ride lane for a snare-only exercise.
 
+Built-in patterns lead with a **one-bar silent intro** before the first note appears, so you have a beat to settle in instead of getting clobbered the instant you hit PLAY. Loaded `.mid` files start immediately — they have their own pacing.
+
 ### 🔁 Practice Loop
 Above the cue view sits a mini timeline showing every note in the loaded song, laid out bar-by-bar. **Click and drag anywhere on it** to carve out a loop region — Rimshot will play just those bars on repeat until you nail them. Grab either edge to refine the range; the selection snaps to the 1/16 grid so your loop boundaries always land on a sensible beat.
 
-Hit **✕ CLEAR LOOP** in the toolbar to drop the selection and play the whole song again. Auto Play and the backing track both respect the loop bounds, so you can woodshed a single fill without the rest of the song getting in the way.
+A small **✕ CLEAR LOOP** button appears in the top-right of the timeline strip whenever a loop is active — click it to drop the selection and play the whole song again. Auto Play and the backing track both respect the loop bounds, so you can woodshed a single fill without the rest of the song getting in the way.
 
 ### 🤖 Auto Play
 Flip the **AUTO PLAY** checkbox and Rimshot plays the song for you — perfect cues, perfect timing, perfect ego death. Great for hearing what a pattern *should* sound like before you embarrass yourself trying it.
@@ -83,7 +85,7 @@ No soundfont, no problem: drum practice works the same either way.
 Open hi-hat (note 46) is tracked separately — the HH indicator switches between `●` (closed) and `○` (open) in real time.
 
 ### 🎛 MIDI Hardware Support
-Plug in any USB MIDI drum kit, pick it from the dropdown, hit **CONNECT**. Rimshot auto-detects all available devices. Velocity is captured live and maps directly to audio gain — hit harder, sound louder.
+Plug in any USB MIDI drum kit, click **CONNECT DRUMS** in the header, pick it from the dialog, hit CONNECT. The button is then replaced with a green badge showing the device name; click the **✎** next to it to swap to a different kit later. Velocity is captured live and maps directly to audio gain — hit harder, sound louder.
 
 ### ⌨️ Keyboard Mode
 No kit? No excuses.
@@ -210,10 +212,10 @@ dotnet run --project Rimshot.Inspector/Rimshot.Inspector.csproj
 
 ### Connect Your Kit
 1. Plug in your MIDI drum kit
-2. Select it from the **device dropdown** in the toolbar
-3. Click **CONNECT**
+2. Click **CONNECT DRUMS** in the header bar
+3. Pick your kit from the dialog and hit CONNECT
 4. Pick a song from the **SONG** dropdown
-5. Hit **▶ PLAY** (or **↺ RESTART** to start the song over)
+5. Hit **▶ PLAY** — use **⏸ PAUSE** to hold, **■ STOP** to reset back to bar 1, or **↺ RESTART** to jump to the song's start without leaving Running state
 6. Start drumming
 
 ---
@@ -238,6 +240,8 @@ Rimshot.sln
 │   │   ├── CueView                   — main 60fps canvas (notes, pads, rings)
 │   │   ├── SongTimelineView          — bar-by-bar strip, drag-to-loop region
 │   │   ├── TempoView                 — BPM + metronome subdivision UI
+│   │   ├── ConnectDrumsDialog        — MIDI device picker (modal)
+│   │   ├── SoundFontPromptWindow     — first-run .sf2 setup prompt
 │   │   └── AboutWindow               — version + repo / bug-report / license dialog
 │   ├── MainWindow                    — toolbar, song picker, tabs, transport
 │   └── Sounds/                       — WAV samples (hh, sn, bd, cr, rd, toms...)
