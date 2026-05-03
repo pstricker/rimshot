@@ -53,17 +53,15 @@ public partial class SongTimelineView : UserControl
     private Song?  _song;
     private double _pxPerEighth = DefaultPxPerEighth;
 
-    // Total canvas width in pixels. Cached during Rebuild so the eighth↔X
-    // mirror helpers below can reference it without recomputing.
+    // Total canvas width in pixels. Cached during Rebuild for layout math.
     private double _totalWidth;
 
-    // Mirror helpers: timeline X axis is reversed relative to the natural
-    // (eighths * px) order so that earlier-in-song bars sit on the RIGHT
-    // (matching CueView's scroll direction where future is left, "now" is
-    // right). Bar 1 → right edge; last bar → left edge; playhead moves
-    // right → left as the song plays.
-    private double EighthsToX(double eighths) => _totalWidth - eighths * _pxPerEighth;
-    private double XToEighths(double x)       => (_totalWidth - x) / _pxPerEighth;
+    // Natural X axis: bar 1 on the left edge, playhead moves left → right
+    // as the song plays. Matches CueView, where cues approach the centered
+    // hit zone from the right — the user's gaze tracks "now" toward the
+    // left/center as time advances.
+    private double EighthsToX(double eighths) => eighths * _pxPerEighth;
+    private double XToEighths(double x)       => x / _pxPerEighth;
 
     // Drag state machine: "None" (idle), "Creating" (initial press → drag),
     // "MoveStart" / "MoveEnd" (refining an existing handle).
@@ -125,16 +123,15 @@ public partial class SongTimelineView : UserControl
     {
         _song = song;
         Rebuild();
-        // Mirrored layout: bar 1 lives at the RIGHT edge of the canvas, so
-        // scroll the viewport to that edge once the layout has measured.
+        // Bar 1 lives at the LEFT edge — reset the viewport so the user
+        // always sees the start of the song after switching songs.
         Dispatcher.UIThread.Post(ScrollToBarOne, DispatcherPriority.Background);
     }
 
     private void ScrollToBarOne()
     {
         if (TimelineScroll is null) return;
-        double max = Math.Max(0, _totalWidth - TimelineScroll.Viewport.Width);
-        TimelineScroll.Offset = new Vector(max, TimelineScroll.Offset.Y);
+        TimelineScroll.Offset = new Vector(0, TimelineScroll.Offset.Y);
     }
 
     private void OnLoopChanged(object? sender, EventArgs e) =>
@@ -265,11 +262,10 @@ public partial class SongTimelineView : UserControl
                 IsHitTestVisible = false,
                 ZIndex           = 5,
             };
-            // Mirror: bar `n`'s region spans from EighthsToX((n+1)*8) on the
-            // left to EighthsToX(n*8) on the right. Place the label 4 px in
-            // from the LEFT edge of that region so labels still read 1, 2,
-            // 3… going right → left across the timeline.
-            Canvas.SetLeft(label, EighthsToX((bar + 1) * 8) + 4);
+            // Bar `n` spans from EighthsToX(n*8) on the left to
+            // EighthsToX((n+1)*8) on the right. Place the label 4px in
+            // from the LEFT edge so they read 1, 2, 3… across the timeline.
+            Canvas.SetLeft(label, EighthsToX(bar * 8) + 4);
             Canvas.SetTop(label, 1);
             TimelineCanvas.Children.Add(label);
             _labelChildren.Add(label);
@@ -301,10 +297,7 @@ public partial class SongTimelineView : UserControl
         foreach (var note in _song.Notes)
         {
             if (!laneToRow.TryGetValue(note.Lane, out int row)) continue;
-            // Mirror: anchor the rect so its RIGHT edge sits at the
-            // mirrored note position (matches original behavior where the
-            // LEFT edge sat at the unmirrored note position).
-            double x = EighthsToX(note.OffsetInEighths) - noteWidth;
+            double x = EighthsToX(note.OffsetInEighths);
             double y = rowsTop + row * rowHeight;
             var rect = new Rectangle
             {
@@ -326,10 +319,11 @@ public partial class SongTimelineView : UserControl
         if (Loop is null || !Loop.IsActive) return;
 
         double height = TimelineCanvas.Height;
-        // Mirror: start (earlier in song) → right side; end (later) → left side.
         double startX = EighthsToX(Loop.StartEighths);
         double endX   = EighthsToX(Loop.EndEighths);
-        double width  = Math.Max(1.0, startX - endX);
+        double leftX  = Math.Min(startX, endX);
+        double rightX = Math.Max(startX, endX);
+        double width  = Math.Max(1.0, rightX - leftX);
 
         _loopOverlay = new Rectangle
         {
@@ -339,15 +333,15 @@ public partial class SongTimelineView : UserControl
             IsHitTestVisible = false,
             ZIndex = 1,
         };
-        Canvas.SetLeft(_loopOverlay, endX);
+        Canvas.SetLeft(_loopOverlay, leftX);
         Canvas.SetTop(_loopOverlay, TimelineBodyTop);
         TimelineCanvas.Children.Add(_loopOverlay);
 
         // Subtle bordered top edge for visual definition
         var topEdge = new Line
         {
-            StartPoint = new Point(endX,   TimelineBodyTop),
-            EndPoint   = new Point(startX, TimelineBodyTop),
+            StartPoint = new Point(leftX,  TimelineBodyTop),
+            EndPoint   = new Point(rightX, TimelineBodyTop),
             Stroke     = PinkBrush,
             StrokeThickness = 2,
             IsHitTestVisible = false,
@@ -355,7 +349,7 @@ public partial class SongTimelineView : UserControl
         };
         TimelineCanvas.Children.Add(topEdge);
 
-        // Drag handles — start handle on the right, end handle on the left.
+        // Drag handles — start handle on the left, end handle on the right.
         _handleStart = MakeHandle(startX, height);
         _handleEnd   = MakeHandle(endX,   height);
         TimelineCanvas.Children.Add(_handleStart);
@@ -457,7 +451,7 @@ public partial class SongTimelineView : UserControl
         double rawEighths = XToEighths(pos.X);
         rawEighths = Math.Clamp(rawEighths, 0, _song.TotalEighths);
 
-        // Hit-test handles first (use mirrored X positions)
+        // Hit-test handles first
         if (Loop.IsActive)
         {
             double startX = EighthsToX(Loop.StartEighths);

@@ -499,7 +499,7 @@ public partial class CueView : UserControl
         {
             var cue = _activeCues[i];
             var (cx, cy) = CuePosition(cue.HitTime, now, cue.Lane);
-            if (cx > _hitZoneX + _laneSpacing * 0.5)
+            if (cx < _hitZoneX - _laneSpacing * 0.5)
             {
                 canvas.Children.Remove(cue.Visual);
                 _activeCues.RemoveAt(i);
@@ -600,7 +600,7 @@ public partial class CueView : UserControl
                 DateTime beatTime  = Engine.SongStartTime.AddMilliseconds(beat * eighthMs);
                 double   remaining = (beatTime - now).TotalMilliseconds;
                 double   progress  = 1.0 - remaining / TravelMs;
-                double   x         = -20 + progress * (_hitZoneX + 20);
+                double   x         = (_canvasW + 20) + progress * (_hitZoneX - _canvasW - 20);
 
                 if (x < -2 || x > _canvasW + 2) continue;
 
@@ -619,7 +619,8 @@ public partial class CueView : UserControl
     {
         double remainingMs = (hitTime - now).TotalMilliseconds;
         double progress    = 1.0 - remainingMs / TravelMs;
-        double x           = -20 + progress * (_hitZoneX + 20);
+        // Cues spawn off-screen RIGHT and travel leftward to the centered hit zone.
+        double x           = (_canvasW + 20) + progress * (_hitZoneX - _canvasW - 20);
         int    activePos   = kitLane < 8 ? _kitToActive[kitLane] : -1;
         double y           = activePos >= 0 ? _laneY[activePos] : _laneY[0];
         return (x, y);
