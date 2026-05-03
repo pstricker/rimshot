@@ -175,7 +175,7 @@ Pre-built packages for the [latest release](https://github.com/pstricker/rimshot
 | Windows (x64) | [Rimshot-windows-x64.exe](https://github.com/pstricker/rimshot/releases/latest/download/Rimshot-windows-x64.exe) — installer |
 | Linux (x64) | [Rimshot-linux-x64.tar.gz](https://github.com/pstricker/rimshot/releases/latest/download/Rimshot-linux-x64.tar.gz) |
 
-> macOS users: support is coming once code signing + Apple notarization are wired up. Until then, build from source if you want to try it.
+> **macOS users:** signed binaries are coming once Apple Developer notarization is wired up. Until then, see [docs/MACOS-SETUP.md](docs/MACOS-SETUP.md) for a step-by-step guide to running Rimshot from source — works fine on Apple Silicon and Intel Macs.
 
 Each package is self-contained — no .NET runtime install required. The Rimshot Inspector ships in the same package as a sub-folder.
 
