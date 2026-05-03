@@ -14,6 +14,9 @@ public class MidiService : IDisposable
 
     public event EventHandler<DrumHit>? DrumHitReceived;
 
+    public string? ConnectedDeviceName { get; private set; }
+    public bool IsConnected => _device is not null;
+
     public IReadOnlyList<string> GetInputDevices() =>
         InputDevice.GetAll().Select(d => d.Name).ToList();
 
@@ -24,6 +27,7 @@ public class MidiService : IDisposable
         _device = InputDevice.GetByName(deviceName);
         _device.EventReceived += OnEventReceived;
         _device.StartEventsListening();
+        ConnectedDeviceName = deviceName;
     }
 
     public void Disconnect()
@@ -34,6 +38,7 @@ public class MidiService : IDisposable
         _device.EventReceived -= OnEventReceived;
         _device.Dispose();
         _device = null;
+        ConnectedDeviceName = null;
     }
 
     private void OnEventReceived(object? sender, MidiEventReceivedEventArgs e)

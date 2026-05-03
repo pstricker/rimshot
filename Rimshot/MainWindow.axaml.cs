@@ -28,7 +28,6 @@ public partial class MainWindow : Window
     private readonly MusicService _music;
     private readonly ObservableCollection<string> _hits = [];
     private readonly ObservableCollection<Song> _songItems = new(SongLibrary.AllItems);
-    private bool _connected;
     private bool _hiHatOpen = false;
     private bool _suppressBpmUpdate = false;
     private bool _suppressBackingToggle = false;
@@ -74,12 +73,8 @@ public partial class MainWindow : Window
         // the next iteration starts cleanly even if a NoteOff was missed.
         _cueEngine.LoopWrapped += (_, _) => _music.Reset();
 
-        var devices = _midi.GetInputDevices();
-        DeviceCombo.ItemsSource = devices;
-        if (devices.Count > 0)
-            DeviceCombo.SelectedIndex = 0;
-
         _midi.DrumHitReceived += OnDrumHit;
+        RefreshConnectionBadge();
 
         TheCueView.Midi = _midi;
         TheCueView.Engine = _cueEngine;
@@ -107,39 +102,25 @@ public partial class MainWindow : Window
     private void OnAboutClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>
         new AboutWindow().ShowDialog(this);
 
-    private void OnConnectClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private async void OnConnectDrumsClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (_connected)
-        {
-            _midi.Disconnect();
-            _connected = false;
-            ConnectButton.Content = "Connect";
-            StatusLabel.Text = "Not connected";
-            StatusLabel.Foreground = Avalonia.Media.Brushes.Gray;
-            return;
-        }
-
-        if (DeviceCombo.SelectedItem is not string deviceName)
-        {
-            StatusLabel.Text = "Select a device first.";
-            return;
-        }
-
-        _midi.Connect(deviceName);
-        _connected = true;
-        ConnectButton.Content = "Disconnect";
-        StatusLabel.Text = $"Connected to {deviceName}";
-        StatusLabel.Foreground = Avalonia.Media.Brushes.Green;
+        await new ConnectDrumsDialog(_midi).ShowDialog(this);
+        RefreshConnectionBadge();
     }
 
-    private void OnRefreshClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void RefreshConnectionBadge()
     {
-        var devices = _midi.GetInputDevices();
-        DeviceCombo.ItemsSource = devices;
-        if (devices.Count > 0)
-            DeviceCombo.SelectedIndex = 0;
-        StatusLabel.Text = $"Found {devices.Count} device(s)";
-        StatusLabel.Foreground = Avalonia.Media.Brushes.Gray;
+        if (_midi.IsConnected)
+        {
+            ConnectDrumsButton.IsVisible = false;
+            ConnectedDrumsBadge.IsVisible = true;
+            ConnectedDeviceLabel.Text = _midi.ConnectedDeviceName ?? "";
+        }
+        else
+        {
+            ConnectDrumsButton.IsVisible = true;
+            ConnectedDrumsBadge.IsVisible = false;
+        }
     }
 
     private void OnPlayClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

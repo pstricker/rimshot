@@ -11,70 +11,84 @@
     <DockPanel>
 
         <!-- ============================================================
-             SLIM CONNECTION STRIP
-             A thin, low-emphasis row dedicated to MIDI device wiring.
-             Pulled out of the main toolbar so the transport island and
-             tempo widget below have room to breathe at 600px MinWidth.
+             HEADER BAR
+             RIMSHOT wordmark on the left, drum-connection state in the
+             middle (CONNECT DRUMS button → green device label + edit),
+             ABOUT (?) on the right.
              ============================================================ -->
         <Border DockPanel.Dock="Top"
-                Background="#101010"
-                BorderBrush="#1F1F1F"
-                BorderThickness="0,0,0,1"
-                Padding="12,4,8,4">
-            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto">
+                Background="#141414"
+                BorderBrush="#FFD700"
+                BorderThickness="0,0,0,2"
+                Padding="14,8,14,8">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+
                 <TextBlock Grid.Column="0"
-                           Text="MIDI"
+                           Text="RIMSHOT"
                            FontFamily="{StaticResource BebasNeue}"
-                           FontSize="11"
+                           FontSize="36"
                            Foreground="#FFD700"
-                           VerticalAlignment="Center"
-                           Margin="0,0,8,0"/>
-                <ComboBox Grid.Column="1"
-                          x:Name="DeviceCombo"
-                          PlaceholderText="Select device…"
-                          MinWidth="160"
-                          MinHeight="22"
-                          Padding="6,1"/>
+                           VerticalAlignment="Center"/>
+
+                <!-- Disconnected state: prominent CONNECT DRUMS button -->
                 <Button Grid.Column="2"
-                        x:Name="ConnectButton"
-                        Content="CONNECT"
-                        Click="OnConnectClicked"
+                        x:Name="ConnectDrumsButton"
+                        Content="CONNECT DRUMS"
+                        Click="OnConnectDrumsClicked"
+                        VerticalAlignment="Center"
                         Background="Transparent"
                         BorderBrush="#FFD700"
                         BorderThickness="1"
                         Foreground="#FFD700"
-                        FontSize="11"
-                        Padding="8,2"
-                        Margin="6,0,0,0"/>
+                        FontSize="12"
+                        Padding="14,6"
+                        Margin="0,0,8,0"/>
+
+                <!-- Connected state: green pill + device name + edit icon -->
+                <Border Grid.Column="2"
+                        x:Name="ConnectedDrumsBadge"
+                        IsVisible="False"
+                        VerticalAlignment="Center"
+                        Background="#0A1A0A"
+                        BorderBrush="#4CAF50"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="10,4,4,4"
+                        Margin="0,0,8,0">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Ellipse Width="8" Height="8"
+                                 Fill="#4CAF50"
+                                 VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ConnectedDeviceLabel"
+                                   Text=""
+                                   FontSize="12"
+                                   Foreground="#4CAF50"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="240"/>
+                        <Button Content="✎"
+                                Click="OnConnectDrumsClicked"
+                                ToolTip.Tip="Change drum device"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="0"
+                                Foreground="#4CAF50"
+                                Width="22" Height="22"
+                                Padding="0"
+                                FontSize="13"/>
+                    </StackPanel>
+                </Border>
+
                 <Button Grid.Column="3"
-                        Content="REFRESH"
-                        Click="OnRefreshClicked"
+                        Content="ABOUT"
+                        Click="OnAboutClicked"
+                        VerticalAlignment="Center"
                         Background="Transparent"
-                        BorderBrush="#333333"
+                        BorderBrush="#444444"
                         BorderThickness="1"
                         Foreground="#888888"
                         FontSize="11"
-                        Padding="8,2"
-                        Margin="4,0,0,0"/>
-                <TextBlock Grid.Column="4"
-                           x:Name="StatusLabel"
-                           VerticalAlignment="Center"
-                           Text="Not connected"
-                           Foreground="#888888"
-                           FontSize="11"
-                           Margin="10,0,0,0"
-                           TextTrimming="CharacterEllipsis"/>
-                <Button Grid.Column="5"
-                        Content="?"
-                        Click="OnAboutClicked"
-                        ToolTip.Tip="About Rimshot"
-                        Background="Transparent"
-                        BorderBrush="#333333"
-                        BorderThickness="1"
-                        Foreground="#888888"
-                        Width="22" Height="22"
-                        Padding="0"
-                        FontSize="12"/>
+                        Padding="10,5"/>
             </Grid>
         </Border>
 
