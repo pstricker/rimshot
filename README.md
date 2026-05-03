@@ -196,7 +196,7 @@ These builds aren't code-signed, so the OS will complain the first time you run 
 ### Prerequisites
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8)
 - A USB MIDI drum kit *(optional — keyboard works fine)*
-- Windows or Linux. (The code itself runs on macOS too, via Avalonia + CoreMIDI; binary releases for macOS are pending Apple Developer signing/notarization.)
+- Windows, Linux, or macOS. macOS works fine from source on Apple Silicon and Intel — see the dedicated [macOS setup guide](docs/MACOS-SETUP.md). Signed Mac binaries are pending Apple Developer notarization.
 
 ### Run It
 ```bash
