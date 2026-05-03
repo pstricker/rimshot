@@ -161,6 +161,17 @@
                                 Foreground="#888888"
                                 FontSize="14"
                                 Padding="10,5"/>
+                        <Button x:Name="StopButton"
+                                Content="■"
+                                ToolTip.Tip="Stop"
+                                Click="OnStopClicked"
+                                IsEnabled="False"
+                                Background="Transparent"
+                                BorderBrush="#444444"
+                                BorderThickness="1"
+                                Foreground="#888888"
+                                FontSize="14"
+                                Padding="10,5"/>
                         <Button x:Name="RestartButton"
                                 Content="↺"
                                 ToolTip.Tip="Restart from beginning"

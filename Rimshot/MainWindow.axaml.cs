@@ -173,10 +173,20 @@ public partial class MainWindow : Window
         UpdateTransportButtons();
     }
 
+    private void OnStopClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        TheCueView.ClearCues();
+        _cueEngine.Stop();
+        _metronome.Stop();
+        _music.Reset();
+        UpdateTransportButtons();
+    }
+
     private void UpdateTransportButtons()
     {
         PlayButton.IsEnabled = _cueEngine.State != Running;
         PauseButton.IsEnabled = _cueEngine.State == Running;
+        StopButton.IsEnabled = _cueEngine.State != Stopped;
     }
 
     private void OnBpmChanged(object? sender, NumericUpDownValueChangedEventArgs e)
