@@ -8,6 +8,8 @@
         MinWidth="600" MinHeight="400"
         Background="#0A0A0A">
 
+  <Grid>
+
     <DockPanel>
 
         <!-- ============================================================
@@ -172,10 +174,31 @@
                                FontSize="13"
                                Foreground="#FFD700"
                                VerticalAlignment="Center"/>
-                    <ComboBox x:Name="SongCombo"
-                              MinWidth="160"
-                              MaxWidth="260"
-                              SelectionChanged="OnSongSelectionChanged"/>
+                    <Button x:Name="LibraryButton"
+                            Click="OnLibraryButtonClicked"
+                            MinWidth="160"
+                            MaxWidth="260"
+                            HorizontalContentAlignment="Stretch"
+                            Background="#0A0A0A"
+                            BorderBrush="#444444"
+                            BorderThickness="1"
+                            Foreground="#FFD700"
+                            FontSize="13"
+                            Padding="10,4"
+                            ToolTip.Tip="Open the song library">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock x:Name="LibraryButtonLabel"
+                                   Grid.Column="0"
+                                   Text="Rock Beat"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="▾"
+                                   Margin="8,0,0,0"
+                                   Foreground="#888888"
+                                   VerticalAlignment="Center"/>
+                      </Grid>
+                    </Button>
                     <CheckBox x:Name="AutoPlayCheck"
                               Content="AUTO PLAY"
                               ToolTip.Tip="Auto-play hits in time with the cues"
@@ -270,4 +293,13 @@
         </TabControl>
 
     </DockPanel>
+
+    <!-- Full-screen Library overlay -->
+    <Border x:Name="LibraryOverlay"
+            IsVisible="False"
+            Background="#0A0A0A">
+      <views:LibraryView x:Name="TheLibraryView"/>
+    </Border>
+
+  </Grid>
 </Window>

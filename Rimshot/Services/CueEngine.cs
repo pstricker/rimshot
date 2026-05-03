@@ -262,7 +262,7 @@ public class CueEngine
 
             if (hitTime > until) break;
 
-            _pendingCues.Enqueue(new FallingCue(notes[_noteIndex].Lane, hitTime));
+            _pendingCues.Enqueue(new FallingCue(notes[_noteIndex].Lane, hitTime, notes[_noteIndex].Hand));
             _noteIndex++;
         }
     }

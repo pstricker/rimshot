@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Avalonia.Controls;
-using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -26,8 +25,8 @@ public partial class MainWindow : Window
     private readonly AudioService _audio = new();
     private readonly MetronomeService _metronome = new();
     private readonly MusicService _music;
+    private readonly MidiLibraryService _midiLibrary = new();
     private readonly ObservableCollection<string> _hits = [];
-    private readonly ObservableCollection<Song> _songItems = new(SongLibrary.AllItems);
     private bool _hiHatOpen = false;
     private bool _suppressBpmUpdate = false;
     private bool _suppressBackingToggle = false;
@@ -58,9 +57,14 @@ public partial class MainWindow : Window
 
         HitLog.ItemsSource = _hits;
 
-        SongCombo.ItemsSource = _songItems;
-        SongCombo.DisplayMemberBinding = new Binding("Name");
-        SongCombo.SelectedIndex = 0;
+        TheLibraryView.Configure(_midiLibrary, SongLibrary.Groups);
+        TheLibraryView.SongSelected += OnLibrarySongSelected;
+        TheLibraryView.CloseRequested += CloseLibrary;
+        TheLibraryView.StatusMessage += msg => SongStatusLabel.Text = msg;
+        _ = _midiLibrary.LoadAsync();
+
+        // Default song matches CueEngine's startup song (Rock Beat).
+        LoadSong(_cueEngine.CurrentSong);
 
         _cueEngine.SongEnded += (_, _) =>
             Dispatcher.UIThread.InvokeAsync(() =>
@@ -174,71 +178,36 @@ public partial class MainWindow : Window
         TheTempoView.SetBpm(bpm);
     }
 
-    private void OnSongSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnLibraryButtonClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        => OpenLibrary();
+
+    private void OpenLibrary()
     {
-        if (SongCombo.SelectedItem is not Song selected) return;
-
-        if (selected == SongLibrary.LoadFromFile)
-        {
-            _ = LoadFromFileAsync();
-            return;
-        }
-
-        _loopSelection.ClearLoop();
-        _loopSelection.SetSongLength(selected.TotalEighths);
-        _cueEngine.LoadSong(selected);
-        TheCueView.SetActiveLanes(GetActiveLanes(selected));
-        // Defense-in-depth: a failure inside the timeline rebuild must not
-        // suppress the BACKING TRACK checkbox or the status label below.
-        try { TheTimelineView.SetSong(selected); }
-        catch (Exception ex) { Console.Error.WriteLine($"SetSong failed: {ex}"); }
-        SongStatusLabel.Text = $"{selected.Notes.Length} notes";
-        UpdateBackingTrackVisibility(selected);
+        LibraryOverlay.IsVisible = true;
+        TheLibraryView.Open();
     }
 
-    private async Task LoadFromFileAsync()
+    private void CloseLibrary() => LibraryOverlay.IsVisible = false;
+
+    private void OnLibrarySongSelected(Song song)
     {
-        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-        {
-            Title = "Load MIDI File",
-            AllowMultiple = false,
-            FileTypeFilter =
-            [
-                new FilePickerFileType("MIDI Files") { Patterns = ["*.mid", "*.midi"] },
-            ],
-        });
+        LoadSong(song);
+        CloseLibrary();
+    }
 
-        if (files.Count == 0)
-        {
-            SongCombo.SelectedIndex = 0;
-            return;
-        }
-
-        try
-        {
-            SongStatusLabel.Text = "Loading…";
-            var song = await Task.Run(() => SongLoader.Load(files[0].Path.LocalPath));
-
-            // Insert before the sentinel ("Load from file…") at the end
-            _songItems.Insert(_songItems.Count - 1, song);
-            SongCombo.SelectedItem = song;
-
-            _loopSelection.ClearLoop();
-            _loopSelection.SetSongLength(song.TotalEighths);
-            _cueEngine.LoadSong(song);
-            TheCueView.SetActiveLanes(GetActiveLanes(song));
-            // Defense-in-depth: a failure inside the timeline rebuild must not
-            // suppress the BACKING TRACK checkbox or the status label below.
-            try { TheTimelineView.SetSong(song); }
-            catch (Exception ex) { Console.Error.WriteLine($"SetSong failed: {ex}"); }
-            SongStatusLabel.Text = $"{song.Notes.Length} notes, {song.TotalEighths / 8.0:F0} bars";
-            UpdateBackingTrackVisibility(song);
-        }
-        catch (Exception ex)
-        {
-            SongStatusLabel.Text = $"Error: {ex.Message}";
-            SongCombo.SelectedIndex = 0;
-        }
+    private void LoadSong(Song song)
+    {
+        _loopSelection.ClearLoop();
+        _loopSelection.SetSongLength(song.TotalEighths);
+        _cueEngine.LoadSong(song);
+        TheCueView.SetActiveLanes(GetActiveLanes(song));
+        // Defense-in-depth: a failure inside the timeline rebuild must not
+        // suppress the BACKING TRACK checkbox or the status label below.
+        try { TheTimelineView.SetSong(song); }
+        catch (Exception ex) { Console.Error.WriteLine($"SetSong failed: {ex}"); }
+        LibraryButtonLabel.Text = song.Name;
+        SongStatusLabel.Text = $"{song.Notes.Length} notes, {song.TotalEighths / 8.0:F0} bars";
+        UpdateBackingTrackVisibility(song);
     }
 
     private void OnClearClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e) =>

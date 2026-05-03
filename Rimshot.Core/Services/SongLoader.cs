@@ -17,7 +17,9 @@ public static class SongLoader
     // and confusing the synth with edits/RPN/NRPN messages we don't model.
     private static readonly HashSet<int> _interestingCCs = new() { 7, 10, 11, 64 };
 
-    public static Song Load(string filePath)
+    public static Song Load(string filePath) => LoadWithBpm(filePath).Song;
+
+    public static (Song Song, double OriginalBpm) LoadWithBpm(string filePath)
     {
         var midiFile = MidiFile.Read(filePath);
         var tempoMap = midiFile.GetTempoMap();
@@ -100,10 +102,11 @@ public static class SongLoader
         double roundedTotal = Math.Max(8.0, Math.Ceiling(totalEighths / 8.0) * 8.0);
 
         string name = Path.GetFileNameWithoutExtension(filePath);
-        return new Song(name, drumNotes, roundedTotal, ShouldLoop: false)
+        var song = new Song(name, drumNotes, roundedTotal, ShouldLoop: false)
         {
             MelodicTrack = melodic,
         };
+        return (song, originalBpm);
     }
 
     private static Dictionary<int, int> BuildNoteToLaneMap()

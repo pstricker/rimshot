@@ -2,4 +2,4 @@ using System;
 
 namespace Rimshot.Core.Models;
 
-public record FallingCue(int Lane, DateTime ScheduledHitTime);
+public record FallingCue(int Lane, DateTime ScheduledHitTime, Hand? Hand = null);

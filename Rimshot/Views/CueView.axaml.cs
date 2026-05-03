@@ -23,6 +23,7 @@ public partial class CueView : UserControl
     // Kit space (0–7): all pads always visible
     private static readonly IReadOnlyList<DrumLane> _allLanes = DrumLane.StandardKit();
     private readonly SolidColorBrush[] _laneBrushes;
+    private readonly SolidColorBrush[] _laneBrushesLeftHand;
     private DispatcherTimer? _timer;
 
     // Active song lanes — subset of _allLanes (kit order preserved)
@@ -78,6 +79,7 @@ public partial class CueView : UserControl
     private sealed class ActiveCue
     {
         public required Rectangle Visual;
+        public TextBlock? HandLabel;
         public DateTime HitTime;
         public int Lane;
         public bool AutoFired;
@@ -148,8 +150,12 @@ public partial class CueView : UserControl
     {
         InitializeComponent();
         _laneBrushes = new SolidColorBrush[8];
+        _laneBrushesLeftHand = new SolidColorBrush[8];
         for (int i = 0; i < 8; i++)
+        {
             _laneBrushes[i] = new SolidColorBrush(_allLanes[i].Color);
+            _laneBrushesLeftHand[i] = new SolidColorBrush(Darken(_allLanes[i].Color, 0.65));
+        }
 
         // Identity map: all 8 lanes active by default
         for (int i = 0; i < 8; i++) _kitToActive[i] = i;
@@ -454,11 +460,14 @@ public partial class CueView : UserControl
 
                 double cW = CueWidth;
                 double cH = CueHeight;
+                var fill = cue.Hand == Hand.Left
+                    ? _laneBrushesLeftHand[cue.Lane]
+                    : _laneBrushes[cue.Lane];
                 var rect = new Rectangle
                 {
                     Width   = cW,
                     Height  = cH,
-                    Fill    = _laneBrushes[cue.Lane],
+                    Fill    = fill,
                     RadiusX = 3,
                     RadiusY = 3,
                 };
@@ -466,11 +475,28 @@ public partial class CueView : UserControl
                 Canvas.SetLeft(rect, cx - cW / 2);
                 Canvas.SetTop(rect,  cy - cH / 2);
                 canvas.Children.Add(rect);
+
+                TextBlock? label = null;
+                if (cue.Hand is Hand hand)
+                {
+                    label = new TextBlock
+                    {
+                        Text       = hand == Hand.Right ? "R" : "L",
+                        FontFamily = s_bebasNeue,
+                        FontSize   = 11,
+                        Foreground = _laneBrushes[cue.Lane],
+                    };
+                    Canvas.SetLeft(label, cx - 4);
+                    Canvas.SetTop(label,  cy - cH / 2 - 14);
+                    canvas.Children.Add(label);
+                }
+
                 _activeCues.Add(new ActiveCue
                 {
-                    Visual  = rect,
-                    HitTime = cue.ScheduledHitTime,
-                    Lane    = cue.Lane,
+                    Visual    = rect,
+                    HandLabel = label,
+                    HitTime   = cue.ScheduledHitTime,
+                    Lane      = cue.Lane,
                 });
             }
             Engine.DrainGridLines(lookAhead);
@@ -502,6 +528,7 @@ public partial class CueView : UserControl
             if (cx < _hitZoneX - _laneSpacing * 0.5)
             {
                 canvas.Children.Remove(cue.Visual);
+                if (cue.HandLabel != null) canvas.Children.Remove(cue.HandLabel);
                 _activeCues.RemoveAt(i);
             }
             else
@@ -533,6 +560,13 @@ public partial class CueView : UserControl
                 double cH = CueHeight;
                 Canvas.SetLeft(cue.Visual, cx - cW / 2);
                 Canvas.SetTop(cue.Visual,  cy - cH / 2);
+
+                if (cue.HandLabel != null)
+                {
+                    cue.HandLabel.Opacity = cue.Visual.Opacity;
+                    Canvas.SetLeft(cue.HandLabel, cx - 4);
+                    Canvas.SetTop(cue.HandLabel,  cy - cH / 2 - 14);
+                }
             }
         }
 
@@ -615,6 +649,12 @@ public partial class CueView : UserControl
             _gridLinePool[k].Opacity = 0;
     }
 
+    private static Color Darken(Color c, double factor) =>
+        Color.FromArgb(c.A,
+            (byte)Math.Clamp(c.R * factor, 0, 255),
+            (byte)Math.Clamp(c.G * factor, 0, 255),
+            (byte)Math.Clamp(c.B * factor, 0, 255));
+
     private (double X, double Y) CuePosition(DateTime hitTime, DateTime now, int kitLane)
     {
         double remainingMs = (hitTime - now).TotalMilliseconds;
@@ -681,7 +721,10 @@ public partial class CueView : UserControl
     public void ClearCues()
     {
         foreach (var cue in _activeCues)
+        {
             CueCanvas.Children.Remove(cue.Visual);
+            if (cue.HandLabel != null) CueCanvas.Children.Remove(cue.HandLabel);
+        }
         _activeCues.Clear();
 
         foreach (var (ring, _, _) in _hitRings)
